@@ -54,7 +54,7 @@
     }
 
     function par(hull) {
-      return bane && bane.pars && bane.pars[hull - 1] ? bane.pars[hull - 1] : null;
+      return GolfStore.parFor(bane && bane.pars, hull);
     }
 
     function navnFor(id) {
@@ -72,14 +72,17 @@
       }
       Object.keys(endring).forEach(function (k) { teams[lagIndex][k] = endring[k]; });
 
-      return GolfStore.saveHole(runde.id, hull, {}, { teams: teams }).then(function (ny) {
-        var fantes = false;
-        for (var i = 0; i < hullRader.length; i++) {
-          if (hullRader[i].hole === hull) { hullRader[i] = ny; fantes = true; break; }
-        }
-        if (!fantes) hullRader.push(ny);
-        hullRader.sort(function (a, b) { return a.hole - b.hole; });
-        runde.holesPlayed = sc().ferdigeHull(hullRader, lag.length);
+      // Raden i minnet oppdateres før den skrives, så en endring som kommer
+      // før lagringen er ferdig bygger videre på denne og ikke overskriver den.
+      var ny = GolfStore.holeRow(runde.id, hull, {}, { teams: teams });
+      var fantes = false;
+      for (var i = 0; i < hullRader.length; i++) {
+        if (hullRader[i].hole === hull) { hullRader[i] = ny; fantes = true; break; }
+      }
+      if (!fantes) hullRader.push(ny);
+      hullRader.sort(function (a, b) { return a.hole - b.hole; });
+      runde.holesPlayed = sc().ferdigeHull(hullRader, lag.length);
+      return GolfStore.putHole(ny).then(function () {
         return GolfStore.saveRound(runde);
       });
     }
@@ -115,8 +118,8 @@
       UI.clear(stillingStripe);
       var st = sc().stilling(hullRader, lag.length);
       lag.forEach(function (l, i) {
-        var sum = sc().total(hullRader, i);
-        var diff = sc().motPar(hullRader, i, bane && bane.pars);
+        var sum = sc().total(hullRader, i, lag.length);
+        var diff = sc().motPar(hullRader, i, bane && bane.pars, lag.length);
         var leder = lag.length > 1 &&
           st.filter(function (r) { return r.place === 1; })
             .some(function (r) { return r.teamIndex === i; }) && sum > 0;
@@ -149,6 +152,17 @@
       var d = lagVerdi(hullNr, lagIndex);
       var parVerdi = par(hullNr);
 
+      // Handlingene leser alltid det som ligger lagret nå, ikke det som lå
+      // der da kortet ble tegnet.
+      function naa() { return lagVerdi(hullNr, lagIndex); }
+
+      function lagreOgTegn(endring, alt) {
+        return lagre(hullNr, lagIndex, endring).then(function () {
+          if (alt) { tegnStilling(); tegnAvslutt(); }
+          tegnHull(); tegnScoreboard();
+        });
+      }
+
       if (lag.length > 1) {
         kort.appendChild(el('div', { class: 'team-head' }, [
           el('span', { class: 'badge badge-solo', text: 'Lag ' + (lagIndex + 1) }),
@@ -168,30 +182,28 @@
         }
       });
 
+      // Merket følger slagene. Med par på hullet setter appen birdie og
+      // eagle selv, og tar dem bort igjen hvis slagene rettes. Ett slag gir
+      // hole in one.
       function skrivSlag(n) {
         felt.value = n === null ? '' : String(n);
-        var endring = { strokes: n };
-        // Med par registrert foreslår appen birdie, eagle eller hole in one.
-        // Forslaget kan alltid overstyres eller fjernes.
-        if (n !== null && !d.mark) {
-          var forslag = sc().foreslaaMerke(n, par(hullNr));
-          if (forslag) endring.mark = forslag;
-          // Hole in one er per definisjon én spillers slag, så spilleren
-          // fylles inn fra utslaget når vi vet hvem det var.
-          if (forslag === 'hio' && !d.solo && d.driveBy) endring.solo = d.driveBy;
+        var gml = naa();
+        var merke = sc().merkeForSlag(n, par(hullNr), gml.mark);
+        var endring = { strokes: n, mark: merke };
+        if (merke !== gml.mark) {
+          // Hole in one er én spillers slag, og det er utslaget som går i hull.
+          endring.solo = merke === 'hio' ? (gml.driveBy || null) : null;
         }
-        if (n === null) { endring.mark = null; endring.solo = null; }
-        lagre(hullNr, lagIndex, endring).then(function () {
-          tegnStilling(); tegnHull(); tegnAvslutt(); tegnScoreboard();
-        });
+        lagreOgTegn(endring, true);
       }
 
       function juster(retning) {
-        if (d.strokes === null || d.strokes === undefined) {
+        var gml = naa().strokes;
+        if (gml === null || gml === undefined) {
           skrivSlag(par(hullNr) || 4);
           return;
         }
-        skrivSlag(Math.max(1, Math.min(20, d.strokes + retning)));
+        skrivSlag(Math.max(1, Math.min(20, gml + retning)));
       }
 
       kort.appendChild(el('div', { class: 'stroke-row' }, [
@@ -213,8 +225,15 @@
           type: 'button', class: 'chip chip-avatar',
           'aria-pressed': String(d.driveBy === pid),
           onclick: function () {
-            lagre(hullNr, lagIndex, { driveBy: d.driveBy === pid ? null : pid })
-              .then(function () { tegnHull(); tegnScoreboard(); });
+            var gml = naa();
+            var ny = gml.driveBy === pid ? null : pid;
+            var endring = { driveBy: ny };
+            // Ved hole in one følger spilleren utslaget, med mindre noen
+            // annen allerede er valgt med vilje.
+            if (gml.mark === 'hio' && ny && (!gml.solo || gml.solo === gml.driveBy)) {
+              endring.solo = ny;
+            }
+            lagreOgTegn(endring, false);
           }
         }, [
           UI.avatar(p ? p.avatarId : 'rev', 28),
@@ -226,31 +245,9 @@
         utslagRad
       ]));
 
-      /* --- birdie, eagle, hole in one --- */
-      var merkeRad = el('div', { class: 'chip-row' });
-      sc().MERKER.forEach(function (m) {
-        merkeRad.appendChild(el('button', {
-          type: 'button', class: 'chip',
-          'aria-pressed': String(d.mark === m.id),
-          text: m.navn,
-          onclick: function () {
-            var ny = d.mark === m.id ? null : m.id;
-            var solo = ny ? d.solo : null;
-            // Hole in one må ha en spiller. Vi foreslår den hvis utslaget
-            // allerede er registrert.
-            if (ny === 'hio' && !solo && d.driveBy) solo = d.driveBy;
-            lagre(hullNr, lagIndex, { mark: ny, solo: solo })
-              .then(function () { tegnHull(); tegnScoreboard(); });
-          }
-        }));
-      });
-      kort.appendChild(el('div', { class: 'stack-tight' }, [
-        el('p', { class: 'label', text: 'Birdie, eagle eller hole in one?' }),
-        el('p', { class: 'muted small', text:
-          parVerdi ? 'Foreslås ut fra par, og kan endres eller fjernes.'
-                   : 'Registreres manuelt. Legg inn par på banen for at appen skal foreslå det selv.' }),
-        merkeRad
-      ]));
+      /* --- birdie, eagle og hole in one --- */
+      var merkeBoks = merkeValg(d, parVerdi, lagreOgTegn, naa);
+      if (merkeBoks) kort.appendChild(merkeBoks);
 
       /* --- solo --- */
       if (d.mark) {
@@ -262,10 +259,10 @@
             type: 'button', class: 'chip chip-avatar',
             'aria-pressed': String(d.solo === pid),
             onclick: function () {
+              var gml = naa();
               // Ved hole in one kan man bytte spiller, men ikke fjerne den.
-              var ny = d.solo === pid ? (erHio ? pid : null) : pid;
-              lagre(hullNr, lagIndex, { solo: ny })
-                .then(function () { tegnHull(); tegnScoreboard(); });
+              var ny = gml.solo === pid ? (erHio ? pid : null) : pid;
+              lagreOgTegn({ solo: ny }, false);
             }
           }, [
             UI.avatar(p2 ? p2.avatarId : 'rev', 28),
@@ -278,10 +275,7 @@
             type: 'button', class: 'chip',
             'aria-pressed': String(!d.solo),
             text: 'Ingen solo',
-            onclick: function () {
-              lagre(hullNr, lagIndex, { solo: null })
-                .then(function () { tegnHull(); tegnScoreboard(); });
-            }
+            onclick: function () { lagreOgTegn({ solo: null }, false); }
           }));
         }
 
@@ -300,15 +294,89 @@
       return kort;
     }
 
+    /* Hva som vises om birdie, eagle og hole in one:
+       - Ingen slag registrert: ingenting.
+       - Hullet har par: appen setter merket selv. Par eller mer gir ingen
+         merke, og da vises ingenting her. Ett slag gir hole in one, som er
+         det eneste man kan velge bort.
+       - Hullet har ikke par: birdie og eagle velges manuelt, og hole in one
+         kommer bare opp ved ett slag. */
+    function merkeValg(d, parVerdi, lagreOgTegn, naa) {
+      var n = d.strokes;
+      if (typeof n !== 'number') return null;
+
+      if (parVerdi) {
+        var fraPar = sc().merkeFraPar(n, parVerdi);
+        if (n === 1) {
+          var hio = d.mark === 'hio';
+          return el('div', { class: 'stack-tight' }, [
+            el('p', { class: 'label', text: 'Hole in one' }),
+            el('div', { class: 'chip-row' }, [
+              el('button', {
+                type: 'button', class: 'chip', 'aria-pressed': String(hio),
+                text: 'Hole in one',
+                onclick: function () {
+                  var gml = naa();
+                  var erNaa = gml.mark === 'hio';
+                  lagreOgTegn({
+                    mark: erNaa ? fraPar : 'hio',
+                    solo: erNaa ? null : (gml.solo || gml.driveBy || null)
+                  }, false);
+                }
+              })
+            ]),
+            el('p', { class: 'muted small', text: hio
+              ? 'Ett slag er registrert som hole in one. Trykk for å ta det bort.'
+              : (fraPar ? 'Registrert som ' + sc().merkeNavn(fraPar).toLowerCase() +
+                          ' ut fra par ' + parVerdi + '. ' : '') +
+                'Trykk hvis det var hole in one.' })
+          ]);
+        }
+        if (!fraPar) return null;
+        return el('div', { class: 'stack-tight' }, [
+          el('p', { class: 'label', text: 'Markert automatisk' }),
+          el('div', { class: 'chip-row' }, [
+            el('span', { class: 'badge badge-' + fraPar, text: sc().merkeNavn(fraPar) })
+          ]),
+          el('p', { class: 'muted small', text:
+            n + ' slag på par ' + parVerdi + ' er ' + sc().merkeNavn(fraPar).toLowerCase() + '.' })
+        ]);
+      }
+
+      // Uten par: manuelt valg.
+      var valg = sc().MERKER.filter(function (m) { return m.id !== 'hio' || n === 1; });
+      var knapper = el('div', { class: 'chip-row' });
+      valg.forEach(function (m) {
+        knapper.appendChild(el('button', {
+          type: 'button', class: 'chip',
+          'aria-pressed': String(d.mark === m.id),
+          text: m.navn,
+          onclick: function () {
+            var gml = naa();
+            var ny = gml.mark === m.id ? null : m.id;
+            var solo = ny === gml.mark ? gml.solo : null;
+            if (ny === 'hio') solo = gml.solo || gml.driveBy || null;
+            lagreOgTegn({ mark: ny, solo: solo }, false);
+          }
+        }));
+      });
+      return el('div', { class: 'stack-tight' }, [
+        el('p', { class: 'label', text: n === 1 ? 'Birdie, eagle eller hole in one?' : 'Birdie eller eagle?' }),
+        el('p', { class: 'muted small', text:
+          'Banen har ikke par, så dette velges manuelt. Legg inn par på banen, så markerer appen det selv.' }),
+        knapper
+      ]);
+    }
+
     function tegnNav() {
       UI.clear(navKnapper);
       navKnapper.appendChild(el('button', {
         class: 'btn btn-secondary', text: '‹ Forrige', disabled: hullNr <= 1,
-        onclick: function () { hullNr--; tegnHull(); tegnNav(); window.scrollTo(0, 0); }
+        onclick: function () { gaaTilHull(hullNr - 1); }
       }));
       navKnapper.appendChild(el('button', {
         class: 'btn btn-primary', text: 'Neste ›', disabled: hullNr >= runde.holes,
-        onclick: function () { hullNr++; tegnHull(); tegnNav(); window.scrollTo(0, 0); }
+        onclick: function () { gaaTilHull(hullNr + 1); }
       }));
     }
 
@@ -342,6 +410,7 @@
 
     function avsluttRunden() {
       var ferdige = sc().ferdigeHull(hullRader, lag.length);
+      if (ferdige === 0) { Screens.ingenHullDialog(runde, nav); return; }
       var mangler = hioUtenSpiller();
 
       if (mangler.length) {
@@ -353,12 +422,7 @@
           confirmText: 'Gå til hullet',
           cancelText: 'Avslutt likevel'
         }).then(function (gaaTil) {
-          if (gaaTil) {
-            hullNr = mangler[0];
-            tegnHull(); tegnNav(); tegnScoreboard();
-            window.scrollTo(0, 0);
-            return;
-          }
+          if (gaaTil) { gaaTilHull(mangler[0]); return; }
           lukkRunden(ferdige);
         });
         return;
@@ -394,14 +458,20 @@
         return;
       }
       var ferdige = sc().ferdigeHull(hullRader, lag.length);
+      if (ferdige === 0) { Screens.ingenHullDialog(runde, nav); return; }
+      // Kutt etter det siste ferdige hullet, så ingen ferdige hull slettes.
+      var sisteFerdige = 0;
+      for (var h = 1; h <= runde.holes; h++) {
+        if (sc().hullFerdig(rad(h), lag.length)) sisteFerdige = h;
+      }
       UI.confirm({
         title: 'Gå fra 18 til 9 hull?',
-        body: 'Runden avsluttes på de ' + ferdige + ' hullene som er ferdigspilt, ' +
-              'og merkes med faktisk antall hull. Dette kan ikke angres.',
-        confirmText: 'Avslutt på ' + ferdige + ' hull', danger: true
+        body: 'Runden avsluttes etter hull ' + sisteFerdige + ', og merkes med faktisk ' +
+              'antall hull. ' + ferdige + ' hull er ferdig registrert. Dette kan ikke angres.',
+        confirmText: 'Avslutt etter hull ' + sisteFerdige, danger: true
       }).then(function (ok) {
         if (!ok) return;
-        runde.holes = Math.max(1, ferdige);
+        runde.holes = sisteFerdige;
         runde.holesPlayed = ferdige;
         return GolfStore.removeHolesAbove(runde.id, runde.holes)
           .then(function () { return GolfStore.saveRound(runde); })
@@ -412,60 +482,24 @@
 
     function tegnScoreboard() {
       UI.clear(scoreboardBoks);
-      scoreboardBoks.appendChild(el('h2', { text: 'Scoreboard' }));
-      scoreboardBoks.appendChild(el('p', { class: 'muted', text:
-        'Slag per hull og totalt. Trykk på et hull for å gå dit.' }));
-      scoreboardBoks.appendChild(
-        el('div', { class: 'card card-tight scroll' }, byggTabell()));
+      scoreboardBoks.appendChild(el('h2', { text: 'Scorekort' }));
+      scoreboardBoks.appendChild(el('p', { class: 'muted small', text:
+        'Slag per hull. B, E og HIO er birdie, eagle og hole in one. Trykk på et hullnummer for å gå dit.' }));
+      scoreboardBoks.appendChild(el('div', { class: 'card card-flush scroll' },
+        Screens.scorekortTabell(runde, hullRader, bane, {
+          aktivtHull: hullNr,
+          velgHull: function (hull) { gaaTilHull(hull); }
+        })));
     }
 
-    function byggTabell() {
-      var tabell = el('table', { class: 'scoreboard' });
-      var hode = el('tr', null, [el('th', { text: lag.length > 1 ? 'Lag' : 'Hull' })]);
-      for (var h = 1; h <= runde.holes; h++) {
-        (function (hull) {
-          hode.appendChild(el('th', null, el('button', {
-            class: 'hole-link' + (hull === hullNr ? ' is-now' : ''),
-            text: String(hull),
-            onclick: function () {
-              hullNr = hull; tegnHull(); tegnNav(); tegnScoreboard(); window.scrollTo(0, 0);
-            }
-          })));
-        })(h);
-      }
-      hode.appendChild(el('th', { text: 'Sum' }));
-      tabell.appendChild(el('thead', null, hode));
-
-      var st = sc().stilling(hullRader, lag.length);
-      var kropp = el('tbody');
-      lag.forEach(function (l, i) {
-        var leder = lag.length > 1 && sc().total(hullRader, i) > 0 &&
-          st.filter(function (r) { return r.place === 1; })
-            .some(function (r) { return r.teamIndex === i; });
-        var tr = el('tr', { dataset: { leader: String(leder) } }, [
-          el('td', { text: lag.length > 1 ? l.name : 'Slag' })
-        ]);
-        for (var h = 1; h <= runde.holes; h++) {
-          var d = lagVerdi(h, i);
-          tr.appendChild(el('td', { class: 'num' }, [
-            el('span', { class: 'sb-strokes', text: d.strokes ? String(d.strokes) : '–' }),
-            el('span', { class: 'sb-points' + (d.mark ? ' is-win' : ''),
-              text: d.mark ? merkeKort(d.mark) : '' })
-          ]));
-        }
-        tr.appendChild(el('td', { class: 'total num', text: String(sc().total(hullRader, i)) }));
-        kropp.appendChild(tr);
-      });
-      tabell.appendChild(kropp);
-      return tabell;
+    function gaaTilHull(hull) {
+      hullNr = hull;
+      tegnHull(); tegnNav(); tegnScoreboard();
+      window.scrollTo(0, 0);
     }
 
     return wrap;
   };
-
-  function merkeKort(mark) {
-    return mark === 'birdie' ? 'B' : mark === 'eagle' ? 'E' : 'HIO';
-  }
 
   /* ======================================================================
      Resultat
@@ -496,7 +530,7 @@
       var liste = el('div', { class: 'list' });
       st.forEach(function (r) {
         var l = lag[r.teamIndex];
-        var diff = sc().motPar(hullRader, r.teamIndex, bane && bane.pars);
+        var diff = sc().motPar(hullRader, r.teamIndex, bane && bane.pars, lag.length);
         liste.appendChild(el('div', {
           class: 'result-row' + (r.place === 1 && lag.length > 1 ? ' is-winner' : '')
         }, [

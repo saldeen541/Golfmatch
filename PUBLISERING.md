@@ -108,8 +108,10 @@ Når jeg leverer endringer, laster du opp de endrede filene på nytt:
 **Add file → Upload files**, dra inn filene, **Commit changes**. GitHub
 overskriver de gamle.
 
-Appen henter den nye versjonen neste gang du åpner den med nett på. Ser du
-likevel den gamle, lukk appen helt og åpne den igjen.
+Appen henter den nye versjonen i bakgrunnen når den er åpen med nett på, og
+gir beskjed når den er lastet ned. Den tas i bruk neste gang appen startes.
+Ser du likevel den gamle, lukk appen helt (sveip den bort) og åpne den igjen.
+Dataene dine blir liggende.
 
 ---
 
@@ -122,8 +124,10 @@ kodelageret og ikke inne i en undermappe.
 **Appen står på «Starter appen …».** Da har ikke filene under `app/` blitt med
 opp. Sjekk at mappene `app` og `icons` finnes i kodelageret.
 
-**Ikonet på hjemskjermen er feil eller mangler.** Fjern appen fra
-hjemskjermen, åpne adressen i Safari på nytt, og legg den til igjen.
+**Ikonet på hjemskjermen er feil eller mangler.** Ta sikkerhetskopi først
+(Innstillinger → Ta sikkerhetskopi). Å fjerne appen fra hjemskjermen sletter
+alle spillere, baner og runder på iPhone. Fjern deretter appen, åpne adressen
+i Safari på nytt, legg den til igjen og gjenopprett fra kopien.
 
 **Ingenting lagres.** Åpne appen, gå til Innstillinger og les linjen under
 «Lagring». Den sier hvilken lagring nettleseren tillater.

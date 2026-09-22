@@ -131,10 +131,13 @@
     });
   }
 
+  Screens.avbrytRunde = avbrytRunde;
+
   function taKopi() {
     GolfBackup.exportBackup().then(function (hvordan) {
       if (hvordan === 'avbrutt') return;
       UI.toast('Sikkerhetskopi ' + hvordan);
+      if (global.GolfApp) GolfApp.nav.rot('hjem');
     }).catch(function () {
       UI.toast('Klarte ikke å lage kopi');
     });
@@ -190,6 +193,7 @@
             onclick: function () {
               GolfStore.setPlayerArchived(p.id, false).then(function () {
                 UI.toast(p.name + ' er tilbake');
+                nav.erstatt('spillere');
               });
             }
           })

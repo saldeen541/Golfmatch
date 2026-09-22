@@ -215,7 +215,25 @@
       });
   }
 
+  // Gjenoppretting skjer i én transaksjon. Stopper den halvveis, for eksempel
+  // fordi appen lukkes, rulles alt tilbake og de gamle dataene står urørt.
   function replaceAll(data) {
+    if (backend === 'indexeddb') {
+      return new Promise(function (resolve, reject) {
+        var tx = idb.transaction(STORES, 'readwrite');
+        STORES.forEach(function (s) {
+          var os = tx.objectStore(s);
+          os.clear();
+          (data[s] || []).forEach(function (row) {
+            if (!row.v) row.v = 1;
+            os.put(row);
+          });
+        });
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+        tx.onabort = function () { reject(tx.error || new Error('avbrutt')); };
+      });
+    }
     return Promise.all(STORES.map(function (s) { return clear(s); }))
       .then(function () {
         var jobs = [];

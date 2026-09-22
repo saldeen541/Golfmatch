@@ -144,14 +144,53 @@
              location.hostname === 'localhost' ||
              location.hostname === '127.0.0.1';
     if (!ok) return;
-    navigator.serviceWorker.register('./sw.js').catch(function (e) {
+    // Var det allerede en service worker her, betyr et bytte at en ny
+    // versjon er lastet ned. Den tas i bruk neste gang appen åpnes.
+    var haddeVersjon = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (haddeVersjon) UI.toast('En ny versjon av appen er lastet ned. Den tas i bruk neste gang du åpner appen.');
+      haddeVersjon = true;
+    });
+
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      // iPhone lar ofte appen ligge i bakgrunnen i stedet for å starte den
+      // på nytt. Vi ser derfor etter ny versjon hver gang den kommer fram.
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') reg.update().catch(function () {});
+      });
+    }).catch(function (e) {
       console.warn('Offline-støtte ble ikke slått på:', e);
     });
   }
 
+  // Ber nettleseren om å ikke rydde bort dataene automatisk. Svaret vises
+  // under Lagring i innstillingene.
+  function beOmVarigLagring() {
+    global.GolfLagring = { varig: null, installert: erInstallert() };
+    if (!navigator.storage || !navigator.storage.persisted) return;
+    navigator.storage.persisted().then(function (ja) {
+      return ja || (navigator.storage.persist ? navigator.storage.persist() : false);
+    }).then(function (ja) {
+      global.GolfLagring.varig = !!ja;
+    }).catch(function () {});
+  }
+
+  function erInstallert() {
+    return (global.matchMedia && global.matchMedia('(display-mode: standalone)').matches) ||
+           navigator.standalone === true;
+  }
+
+  // Feil som ellers ville forsvunnet i stillhet, for eksempel en lagring som
+  // ikke gikk gjennom, skal brukeren få vite om.
+  window.addEventListener('unhandledrejection', function (e) {
+    console.error(e.reason);
+    UI.toast('Noe gikk galt, og endringen ble kanskje ikke lagret. Prøv igjen.');
+  });
+
   function start() {
     settTema();
     registrerServiceWorker();
+    beOmVarigLagring();
 
     var mangler = manglendeFiler();
     if (mangler.length) {

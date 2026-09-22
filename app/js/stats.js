@@ -13,8 +13,41 @@
 (function (global) {
   'use strict';
 
+  // En runde teller når den er fullført og minst ett hull er ferdig
+  // registrert. En match må ha minst to spillere for å kunne ha en vinner.
   function fullforte(runder) {
-    return runder.filter(function (r) { return r.status === 'fullfort'; });
+    return runder.filter(function (r) {
+      if (r.status !== 'fullfort') return false;
+      if (!(r.holesPlayed > 0)) return false;
+      if (r.mode === 'match' && (!r.playerIds || r.playerIds.length < 2)) return false;
+      return true;
+    });
+  }
+
+  /* Beste runde og snitt gir bare mening mellom runder med like mange hull.
+     Vi sammenligner derfor runder på 18 hull hvis det finnes noen, ellers
+     runder på 9. Runder som er kortet ned til et annet antall hull telles
+     med i antall runder, men ikke i beste og snitt. */
+  function sammenlignbare(liste, hullFor) {
+    var har18 = liste.some(function (x) { return hullFor(x) === 18; });
+    var har9 = liste.some(function (x) { return hullFor(x) === 9; });
+    var hull = har18 ? 18 : har9 ? 9 : null;
+    if (hull === null) {
+      // Ingen hele runder. Bruk det vanligste antallet hull.
+      var telling = {};
+      liste.forEach(function (x) { telling[hullFor(x)] = (telling[hullFor(x)] || 0) + 1; });
+      Object.keys(telling).forEach(function (k) {
+        if (hull === null || telling[k] > telling[hull]) hull = Number(k);
+      });
+    }
+    return {
+      hull: hull,
+      liste: liste.filter(function (x) { return hullFor(x) === hull; })
+    };
+  }
+
+  function snittAv(tall) {
+    return tall.length ? tall.reduce(function (a, b) { return a + b; }, 0) / tall.length : null;
   }
 
   function aarFor(runde) {
@@ -113,8 +146,8 @@
         playerIds: l.playerIds.slice(),
         key: nokkel(l.playerIds),
         hull: ferdige,
-        total: GolfScramble.total(hull, i),
-        motPar: GolfScramble.motPar(hull, i, bane && bane.pars)
+        total: GolfScramble.total(hull, i, lag.length),
+        motPar: GolfScramble.motPar(hull, i, bane && bane.pars, lag.length)
       };
     }).filter(function (x) { return x.hull > 0; });
   }
@@ -128,22 +161,25 @@
         if (!acc[x.key]) {
           acc[x.key] = {
             key: x.key, playerIds: x.playerIds.slice().sort(),
-            runder: 0, totaler: [], motPar: []
+            runder: 0, rader: []
           };
         }
         acc[x.key].runder += 1;
-        acc[x.key].totaler.push(x.total);
-        if (x.motPar !== null) acc[x.key].motPar.push(x.motPar);
+        acc[x.key].rader.push(x);
       });
     });
 
     return Object.keys(acc).map(function (k) {
       var o = acc[k];
-      o.beste = Math.min.apply(null, o.totaler);
-      o.snitt = o.totaler.reduce(function (a, b) { return a + b; }, 0) / o.totaler.length;
-      o.motParSnitt = o.motPar.length
-        ? o.motPar.reduce(function (a, b) { return a + b; }, 0) / o.motPar.length
-        : null;
+      var sml = sammenlignbare(o.rader, function (x) { return x.hull; });
+      var totaler = sml.liste.map(function (x) { return x.total; });
+      var motPar = sml.liste.map(function (x) { return x.motPar; })
+        .filter(function (v) { return v !== null; });
+      o.hullISnitt = sml.hull;
+      o.beste = totaler.length ? Math.min.apply(null, totaler) : null;
+      o.snitt = snittAv(totaler);
+      o.motParSnitt = snittAv(motPar);
+      delete o.rader;
       return o;
     }).sort(function (a, b) {
       if (b.runder !== a.runder) return b.runder - a.runder;
@@ -186,8 +222,9 @@
       });
     });
 
-    var totaler = rader.map(function (x) { return x.total; });
-    var motPar = rader.map(function (x) { return x.motPar; })
+    var sml = sammenlignbare(rader, function (x) { return x.hull; });
+    var totaler = sml.liste.map(function (x) { return x.total; });
+    var motPar = sml.liste.map(function (x) { return x.motPar; })
       .filter(function (v) { return v !== null; });
 
     return {
@@ -195,9 +232,10 @@
       playerIds: rader.length ? rader[0].playerIds.slice().sort() : [],
       rader: rader.sort(function (a, b) { return b.runde.startedAt - a.runde.startedAt; }),
       runder: rader.length,
+      hullISnitt: sml.hull,
       beste: totaler.length ? Math.min.apply(null, totaler) : null,
-      snitt: totaler.length ? totaler.reduce(function (a, b) { return a + b; }, 0) / totaler.length : null,
-      motParSnitt: motPar.length ? motPar.reduce(function (a, b) { return a + b; }, 0) / motPar.length : null,
+      snitt: snittAv(totaler),
+      motParSnitt: snittAv(motPar),
       spillere: Object.keys(perSpiller).map(function (id) {
         var s = perSpiller[id];
         s.utslagAndel = s.hull ? s.utslag / s.hull : 0;
@@ -296,17 +334,29 @@
       .map(function (r) {
         var hull = hullKart[r.id] || [];
         var lag = lagFor(r);
+        var bane = global.GolfStore && r.courseId ? GolfStore.course(r.courseId) : null;
         var totaler = lag.map(function (l, i) {
-          return { navn: l.name, total: GolfScramble.total(hull, i) };
+          return {
+            navn: l.name,
+            total: GolfScramble.total(hull, i, lag.length),
+            motPar: GolfScramble.motPar(hull, i, bane && bane.pars, lag.length)
+          };
         });
-        var beste = totaler.reduce(function (m, t) {
-          return m === null || t.total < m ? t.total : m;
-        }, null);
-        return { runde: r, lag: lag, totaler: totaler, beste: beste || 0 };
+        var best = null;
+        totaler.forEach(function (t) { if (best === null || t.total < best.total) best = t; });
+        return {
+          runde: r, lag: lag, totaler: totaler,
+          beste: best ? best.total : 0,
+          besteMotPar: best ? best.motPar : null,
+          hull: GolfScramble.ferdigeHull(hull, lag.length)
+        };
       });
 
     if (sortering === 'score') {
+      // Flest hull først, slik at en 9-hullsrunde aldri havner foran en
+      // 18-hullsrunde bare fordi den har færre slag.
       kort.sort(function (a, b) {
+        if (a.hull !== b.hull) return b.hull - a.hull;
         if (a.beste !== b.beste) return a.beste - b.beste;
         return b.runde.startedAt - a.runde.startedAt;
       });
@@ -357,19 +407,18 @@
         if (!ferdige) return;
         lagRunder.push({
           runde: r, lagNavn: l.name, hull: ferdige,
-          total: GolfScramble.total(hull, i),
-          motPar: GolfScramble.motPar(hull, i, bane.pars)
+          total: GolfScramble.total(hull, i, lag.length),
+          motPar: GolfScramble.motPar(hull, i, bane.pars, lag.length)
         });
       });
     });
 
+    var sml = sammenlignbare(lagRunder, function (lr) { return lr.hull; });
     var beste = null;
-    lagRunder.forEach(function (lr) {
+    sml.liste.forEach(function (lr) {
       if (beste === null || lr.total < beste.total) beste = lr;
     });
-    var snitt = lagRunder.length
-      ? lagRunder.reduce(function (s, lr) { return s + lr.total; }, 0) / lagRunder.length
-      : null;
+    var snitt = snittAv(sml.liste.map(function (lr) { return lr.total; }));
 
     // Snitt per hull, over alle lag i alle scramble-runder på banen.
     var perHull = [];
@@ -379,15 +428,17 @@
       scramble.forEach(function (r) {
         var hull = hullKart[r.id] || [];
         var lag = lagFor(r);
-        var rad = null;
-        for (var i = 0; i < hull.length; i++) if (hull[i].hole === h) rad = hull[i];
-        if (!rad) return;
-        for (var t = 0; t < lag.length; t++) {
-          var s = GolfScramble.slagPaaHull(rad, t);
-          if (s !== null) verdier.push(s);
+        // På en 9-hullsbane som er spilt to ganger er hull 10 samme hull som 1.
+        for (var i = 0; i < hull.length; i++) {
+          var nr = hull[i].hole;
+          if (nr !== h && !(antallHull === 9 && nr - 9 === h)) continue;
+          for (var t = 0; t < lag.length; t++) {
+            var s = GolfScramble.slagPaaHull(hull[i], t);
+            if (s !== null) verdier.push(s);
+          }
         }
       });
-      var par = bane.pars && bane.pars[h - 1] ? bane.pars[h - 1] : null;
+      var par = GolfStore.parFor(bane.pars, h);
       var sn = verdier.length
         ? verdier.reduce(function (a, b) { return a + b; }, 0) / verdier.length
         : null;
@@ -414,6 +465,7 @@
       bane: bane,
       scrambleRunder: scramble.length,
       lagRunder: lagRunder.length,
+      hullISnitt: sml.hull,
       beste: beste,
       snitt: snitt,
       perHull: perHull,

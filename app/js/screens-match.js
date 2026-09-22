@@ -51,7 +51,7 @@
     }
 
     function par(hull) {
-      return bane && bane.pars && bane.pars[hull - 1] ? bane.pars[hull - 1] : null;
+      return GolfStore.parFor(bane && bane.pars, hull);
     }
 
     function navnFor(id) {
@@ -61,18 +61,21 @@
 
     /* ---- lagring --------------------------------------------------- */
 
+    // Raden i minnet oppdateres før den skrives. Da tar neste endring,
+    // som kan komme før lagringen er ferdig, alltid med seg denne.
     function settSlag(hull, playerId, verdi) {
       var s = Object.assign({}, slag(hull));
       if (verdi === null) delete s[playerId];
       else s[playerId] = verdi;
-      return GolfStore.saveHole(runde.id, hull, s).then(function (ny) {
-        var fantes = false;
-        for (var i = 0; i < hullRader.length; i++) {
-          if (hullRader[i].hole === hull) { hullRader[i] = ny; fantes = true; break; }
-        }
-        if (!fantes) hullRader.push(ny);
-        hullRader.sort(function (a, b) { return a.hole - b.hole; });
-        runde.holesPlayed = GolfMatch.ferdigeHull(hullRader, runde.playerIds);
+      var ny = GolfStore.holeRow(runde.id, hull, s);
+      var fantes = false;
+      for (var i = 0; i < hullRader.length; i++) {
+        if (hullRader[i].hole === hull) { hullRader[i] = ny; fantes = true; break; }
+      }
+      if (!fantes) hullRader.push(ny);
+      hullRader.sort(function (a, b) { return a.hole - b.hole; });
+      runde.holesPlayed = GolfMatch.ferdigeHull(hullRader, runde.playerIds);
+      return GolfStore.putHole(ny).then(function () {
         return GolfStore.saveRound(runde);
       });
     }
@@ -213,12 +216,12 @@
       navKnapper.appendChild(el('button', {
         class: 'btn btn-secondary', text: '‹ Forrige',
         disabled: hullNr <= 1,
-        onclick: function () { hullNr--; tegnHull(); tegnNav(); window.scrollTo(0, 0); }
+        onclick: function () { gaaTilHull(hullNr - 1); }
       }));
       navKnapper.appendChild(el('button', {
         class: 'btn btn-primary', text: 'Neste ›',
         disabled: hullNr >= runde.holes,
-        onclick: function () { hullNr++; tegnHull(); tegnNav(); window.scrollTo(0, 0); }
+        onclick: function () { gaaTilHull(hullNr + 1); }
       }));
     }
 
@@ -244,6 +247,7 @@
 
     function avsluttRunden() {
       var ferdige = GolfMatch.ferdigeHull(hullRader, runde.playerIds);
+      if (ferdige === 0) { Screens.ingenHullDialog(runde, nav); return; }
       var melding = ferdige === runde.holes
         ? 'Resultatet lagres og oppdaterer all time-statistikken.'
         : 'Bare ' + ferdige + ' av ' + runde.holes + ' hull er ferdig registrert. ' +
@@ -271,15 +275,23 @@
         return;
       }
       var ferdige = GolfMatch.ferdigeHull(hullRader, runde.playerIds);
+      if (ferdige === 0) { Screens.ingenHullDialog(runde, nav); return; }
+      // Runden kuttes etter det siste hullet som er ferdig registrert, slik
+      // at ingen ferdige hull blir slettet selv om et hull er hoppet over.
+      var sisteFerdige = 0;
+      for (var h = 1; h <= runde.holes; h++) {
+        if (GolfMatch.erFerdig(slag(h), runde.playerIds)) sisteFerdige = h;
+      }
       UI.confirm({
         title: 'Gå fra 18 til 9 hull?',
-        body: 'Runden avsluttes på de ' + ferdige + ' hullene som er ferdigspilt, ' +
-              'og merkes med faktisk antall hull. Dette kan ikke angres.',
-        confirmText: 'Avslutt på ' + ferdige + ' hull',
+        body: 'Runden avsluttes etter hull ' + sisteFerdige + ', og merkes med faktisk ' +
+              'antall hull. ' + UI.plural(ferdige, 'hull er', 'hull er') + ' ferdig registrert. ' +
+              'Dette kan ikke angres.',
+        confirmText: 'Avslutt etter hull ' + sisteFerdige,
         danger: true
       }).then(function (ok) {
         if (!ok) return;
-        runde.holes = Math.max(1, ferdige);
+        runde.holes = sisteFerdige;
         runde.holesPlayed = ferdige;
         return GolfStore.removeHolesAbove(runde.id, runde.holes)
           .then(function () { return GolfStore.saveRound(runde); })
@@ -292,57 +304,20 @@
 
     function tegnScoreboard() {
       UI.clear(scoreboardBoks);
-      scoreboardBoks.appendChild(el('h2', { text: 'Scoreboard' }));
-      scoreboardBoks.appendChild(el('p', { class: 'muted', text:
-        'Øverste tall er slag, nederste er poeng. Trykk på et hull for å gå dit.' }));
-      scoreboardBoks.appendChild(
-        el('div', { class: 'card card-tight scroll' }, byggTabell()));
+      scoreboardBoks.appendChild(el('h2', { text: 'Scorekort' }));
+      scoreboardBoks.appendChild(el('p', { class: 'muted small', text:
+        'Øverste tall er slag, nederste er poeng. Trykk på et hullnummer for å gå dit.' }));
+      scoreboardBoks.appendChild(el('div', { class: 'card card-flush scroll' },
+        Screens.scorekortTabell(runde, hullRader, bane, {
+          aktivtHull: hullNr,
+          velgHull: function (hull) { gaaTilHull(hull); }
+        })));
     }
 
-    function byggTabell() {
-      var perHull = GolfMatch.poengPerHull(hullRader, runde.playerIds);
-      var sum = GolfMatch.totaler(hullRader, runde.playerIds);
-      var tabell = el('table', { class: 'scoreboard' });
-
-      var hodeRad = el('tr', null, [el('th', { text: 'Spiller' })]);
-      for (var h = 1; h <= runde.holes; h++) {
-        (function (hull) {
-          hodeRad.appendChild(el('th', null, el('button', {
-            class: 'hole-link' + (hull === hullNr ? ' is-now' : ''),
-            text: String(hull),
-            onclick: function () { hullNr = hull; tegnHull(); tegnNav(); tegnScoreboard(); window.scrollTo(0, 0); }
-          })));
-        })(h);
-      }
-      hodeRad.appendChild(el('th', { text: 'Sum' }));
-      tabell.appendChild(el('thead', null, hodeRad));
-
-      var best = Math.max.apply(null, runde.playerIds.map(function (id) { return sum[id]; }));
-      var kropp = el('tbody');
-      spillere.forEach(function (sp, i) {
-        var leder = sum[sp.id] === best && best > 0;
-        var tr = el('tr', { dataset: { leader: String(leder) } }, [
-          el('td', null, el('span', { class: 'sb-player' }, [
-            UI.avatar(sp.avatarId, 32, UI.playerColorVar(i)),
-            el('span', { text: sp.name })
-          ]))
-        ]);
-        for (var h = 1; h <= runde.holes; h++) {
-          var s = slag(h)[sp.id];
-          var poeng = perHull[h] ? perHull[h][sp.id] : 0;
-          tr.appendChild(el('td', { class: 'num' }, [
-            el('span', { class: 'sb-strokes', text: s === undefined ? '–' : String(s) }),
-            el('span', {
-              class: 'sb-points' + (poeng === 1 ? ' is-win' : ''),
-              text: perHull[h] ? poengTekst(poeng) : ''
-            })
-          ]));
-        }
-        tr.appendChild(el('td', { class: 'total num', text: poengTekst(sum[sp.id]) }));
-        kropp.appendChild(tr);
-      });
-      tabell.appendChild(kropp);
-      return tabell;
+    function gaaTilHull(hull) {
+      hullNr = hull;
+      tegnHull(); tegnNav(); tegnScoreboard();
+      window.scrollTo(0, 0);
     }
 
     return wrap;

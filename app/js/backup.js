@@ -83,7 +83,19 @@
     var known = GolfDB.stores;
     for (var i = 0; i < known.length; i++) {
       var rows = payload.data[known[i]];
-      if (rows !== undefined && !Array.isArray(rows)) return 'Filen er skadet.';
+      if (rows === undefined) continue;
+      if (!Array.isArray(rows)) return 'Filen er skadet.';
+      for (var j = 0; j < rows.length; j++) {
+        var r = rows[j];
+        if (!r || typeof r !== 'object' || (typeof r.id !== 'string' && typeof r.id !== 'number')) {
+          return 'Filen er skadet.';
+        }
+      }
+    }
+    // Rundene må ha en spillerliste, ellers kan ikke appen vise dem.
+    var runder = payload.data.rounds || [];
+    for (var k = 0; k < runder.length; k++) {
+      if (!Array.isArray(runder[k].playerIds)) return 'Filen er skadet.';
     }
     return null;
   }

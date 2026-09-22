@@ -4,8 +4,10 @@ Denne filen er overleveringen mellom arbeidsøkter. Les den først i en ny økt,
 før du leser kode.
 
 **Sist oppdatert:** 22. september 2026
-**Nå:** fase 6 levert. Alle byggefaser er ferdige. Det som gjenstår er fase 8:
-Kim publiserer på GitHub Pages og prøver appen på iPhone.
+**Nå:** appen er publisert på GitHub Pages og virker i flymodus. Andre økt
+22.09 rettet skalering på mobil, innførte automatiske merker i scramble og
+rettet feil funnet i en gjennomgang av hele koden. Versjon `golfapp-v7-1`.
+Kim må laste opp de endrede filene på nytt (se «Levert i økt 2» nederst).
 
 ---
 
@@ -46,6 +48,15 @@ Disse er avklart med Kim og skal ikke tas opp igjen uten at han ber om det.
 | Hole in one i Scramble | Spilleren må pekes ut. Fylles inn fra utslaget når det er registrert, og appen sier fra før runden lukkes hvis den mangler |
 | Likhet på hull i Match | Alle med lavest antall slag får 0,5. Totalsummen i en runde kan overstige antall hull, og det er greit: bare utfallet av matchen teller inn i all time-tabellen |
 | Publisering | GitHub Pages, offentlig kodelager. Ingen golfdata havner i kodelageret |
+| Merker i Scramble | Med par på hullet setter appen merket selv: par minus 1 er birdie, par minus 2 eller bedre er eagle, par eller mer gir ingen merke og ingen valg. Da vises bare valget av utslag. Rettes slagene, følger merket med |
+| Valget av hole in one | Kommer bare opp ved 1 slag. Settes som standard og kan tas bort. Tas det bort, gjelder merket par gir (eagle på par 3). Spilleren fylles inn fra utslaget |
+| Scramble uten par | Birdie og eagle velges manuelt. Hole in one bare ved 1 slag |
+| Scorekort i appen | Hullene står nedover og spillerne eller lagene bortover. Da får kortet plass i bredden på alle telefoner, også med 18 hull. Rapportbildet beholder papirkortformen med UT og INN |
+| Totaler i Scramble | Teller bare hull der alle lag har levert slag. Mot par regnes bare på hull med par |
+| 9-hullsbane spilt to ganger | Hull 10 til 18 bruker par fra hull 1 til 9, i mot par, scorekort, rapport og banestatistikk |
+| Match med én spiller | Ikke lov. Match krever minst to spillere |
+| Avslutte uten ferdige hull | Ikke lov. Appen tilbyr å avbryte runden i stedet. Slike runder, og match med færre enn to spillere, holdes også utenfor statistikken |
+| Beste og snitt | Sammenligner bare runder med like mange ferdige hull: 18 hvis det finnes, ellers 9 |
 | Kodemappe | `Golfapp` i Google Drive, koblet til Claude-økten |
 
 ---
@@ -61,7 +72,7 @@ Disse er avklart med Kim og skal ikke tas opp igjen uten at han ber om det.
 | 5 | Statistikk: Match-tabell, seierspall, spilleroversikt, rundekort og banestatistikk | Ferdig 22.09.2026 |
 | 6 | Eksportrapport som bilde, klar for Discord | Ferdig 22.09.2026 |
 | 7 | PWA-skall: manifest, service worker, ikoner, offline-test | Ferdig 22.09.2026, framskyndet |
-| 8 | Publisering og bruksanvisning til vennene | Oppskrift levert i PUBLISERING.md. Kim gjennomfører |
+| 8 | Publisering og bruksanvisning til vennene | Publisert på GitHub Pages 22.09.2026. Flymodus bekreftet på iPhone |
 
 ---
 
@@ -206,11 +217,8 @@ Kildefilene under `app/` er de appen bygges videre av i fase 2.
 
 ## Åpne punkter
 
-1. **Kim skal publisere og prøve appen på iPhone.** Oppskriften ligger i
-   `PUBLISERING.md`. Appen kan ikke åpnes fra Filer-appen på iPhone: en
-   nettapp med flere filer kjører ikke der. Særlig verdt å sjekke etter
-   installasjon: at lagringen overlever at appen lukkes, at den starter i
-   flymodus, og at delefunksjonen dukker opp ved sikkerhetskopi.
+1. **Sikkerhetskopi på iPhone er ikke prøvd.** Kim sjekker at delefunksjonen
+   dukker opp, og at lagringen overlever at appen lukkes.
 2. **Rapporten er ikke prøvd på iPhone.** Den er testet i Chromium, der bildet
    blir riktig og nedlastingen virker. På iPhone går delingen gjennom
    `navigator.share`, som krever at trykket kommer fra brukeren. Knappen kaller
@@ -243,3 +251,68 @@ Kildefilene under `app/` er de appen bygges videre av i fase 2.
   telefonen å bruke den gamle kopien. Legg nye filer inn i `FILER`-listen.
 - Service workeren registreres bare på https og localhost. Åpnes appen fra
   disk, hoppes den over, og appen virker som en vanlig side.
+
+---
+
+## Levert i økt 2 (22.09.2026)
+
+Endrede filer, som må lastes opp til GitHub på nytt: `sw.js`, `PUBLISERING.md`,
+`STATUS.md`, `app/styles/app.css` og disse under `app/js/`: `app.js`,
+`backup.js`, `db.js`, `rapport.js`, `scramble.js`, `screens.js`,
+`screens-match.js`, `screens-round.js`, `screens-scramble.js`,
+`screens-stats.js`, `stats.js`, `store.js`.
+
+**Skalering.** Årsaken var at klassen `.scroll` bare fantes i designsystemsiden,
+ikke i `app.css`. Scorekortet på 18 hull gjorde derfor hele siden 1144 px bred,
+og telefonen zoomet ut. Rettet med `.scroll`, `minmax(0, 1fr)` i stablene,
+`overflow-x: clip` på siden, fast høyde på topplinjen, mindre luft på smale
+telefoner og navn som brekker i stedet for å dytte slagtelleren ut. Testet på
+320, 360, 375, 390 og 430 px bredde: ingen skjerm er bredere enn telefonen, og
+ingen tabell må rulles sidelengs.
+
+**Felles scorekort.** `Screens.scorekortTabell` i `screens-round.js` brukes av
+registreringen i begge moduser, resultatskjermene og avbrutte runder.
+
+**Rettet etter gjennomgang:**
+
+- Slag kunne gå tapt når man tastet et tall og trykket en annen knapp med én
+  gang. Raden i minnet oppdateres nå før den skrives (`GolfStore.holeRow` og
+  `putHole`).
+- Scramble-totalen talte hull der det andre laget ikke hadde levert.
+- Mot par ble feil etter 9 → 18 hull på en 9-hullsbane (72 slag viste +36).
+- En 9-hullsrunde kunne bli «beste runde» foran en 18-hullsrunde.
+- 18 → 9 hull kunne slette ferdige hull når et hull var hoppet over. Runden
+  kuttes nå etter siste ferdige hull.
+- Runder uten ferdige hull, og match med én spiller, ga seire i all time-tabellen.
+- Sesong- og banefilteret kunne bli stående på et valg som ikke fantes lenger.
+- Dobbelttrykk på «Start runde» laget to pågående runder.
+- Avbrutte runder viste en gammel tekst om fase 3 og 4. De viser nå scorekortet.
+- «Hent tilbake» på arkiverte spillere oppdaterte ikke listen.
+- Rapporten skrev «Par mot par».
+- `PUBLISERING.md` rådet til å fjerne appen fra Hjem-skjermen uten å nevne at
+  det sletter alle data på iPhone.
+
+**Forbedret:**
+
+- Service workeren henter filer forbi nettleserens mellomlager ved
+  installasjon, venter maks 2 sekunder på nett før appen startes fra lageret,
+  og lagrer bare gyldige svar. Appen ser etter ny versjon når den kommer fram
+  på skjermen, og sier fra når en ny versjon er lastet ned.
+- Appen ber om varig lagring (`navigator.storage.persist`), og Innstillinger
+  viser svaret. Åpnes appen i Safari i stedet for fra Hjem-skjermen, står det
+  en advarsel om at dataene er adskilt.
+- Gjenoppretting skjer i én transaksjon, så en avbrutt gjenoppretting ikke
+  lar appen stå tom. Kopien sjekkes grundigere før noe slettes.
+- Feil som ellers ville forsvunnet i stillhet, gir nå en melding.
+- Tilbakeknappen er 48 px.
+
+**Forslag som ikke er gjort:**
+
+- Deling av rapport og sikkerhetskopi på iPhone: bildet og filen lages etter
+  trykket. Safari kan avvise delingen hvis det tar for lang tid. Hvis det skjer,
+  bør de lages på forhånd når skjermen åpnes.
+- Hvis IndexedDB ikke åpner innen 4 sekunder, går appen stille over til
+  localStorage og ser tom ut. Bør heller prøve igjen og si fra.
+- Små trykkflater under 48 px: `.btn-sm`, `.chip-sm` og hullnumrene i scorekortet.
+- Albatross (par minus 3) registreres som eagle. Appen har ikke eget merke for det.
+

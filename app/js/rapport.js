@@ -469,7 +469,7 @@
 
     var stillingRader = stilling.map(function (s) {
       var l = lag[s.teamIndex];
-      var diff = GolfScramble.motPar(hullRader, s.teamIndex, pars);
+      var diff = GolfScramble.motPar(hullRader, s.teamIndex, pars, lag.length);
       return {
         plass: lag.length > 1 ? s.place : null,
         navn: l.name,
@@ -477,7 +477,7 @@
         avatarIder: l.playerIds.map(avatarFor),
         farge: F.spiller[s.teamIndex % 4],
         verdi: String(s.strokes),
-        verdiUnder: diff !== null ? GolfScramble.motParTekst(diff) + ' mot par' : null
+        verdiUnder: diff === null ? null : diff === 0 ? 'Par' : GolfScramble.motParTekst(diff) + ' mot par'
       };
     });
 
@@ -491,7 +491,7 @@
         for (var k = 0; k < hullRader.length; k++) if (hullRader[k].hole === h) rad = hullRader[k];
         var d = GolfScramble.lagData(rad, i);
         if (!d || !d.strokes) { celler[h] = null; continue; }
-        var p = pars && pars[h - 1] ? pars[h - 1] : null;
+        var p = GolfStore.parFor(pars, h);
         celler[h] = {
           tekst: String(d.strokes),
           tall: d.strokes,

@@ -9,7 +9,7 @@
    fortsetter telefonen å bruke den gamle kopien.
    ========================================================================== */
 
-var VERSJON = 'golfapp-v6-2';
+var VERSJON = 'golfapp-v7-1';
 
 var FILER = [
   './',
@@ -41,7 +41,14 @@ var FILER = [
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(VERSJON)
-      .then(function (cache) { return cache.addAll(FILER); })
+      // cache: 'reload' går forbi nettleserens vanlige mellomlager. Ellers kan
+      // en ny versjon bli installert med gamle filer hvis den legges ut to
+      // ganger med kort mellomrom.
+      .then(function (cache) {
+        return cache.addAll(FILER.map(function (url) {
+          return new Request(url, { cache: 'reload' });
+        }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });
@@ -62,22 +69,45 @@ self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
 
-  // Sidevisninger: prøv nett først, slik at en ny versjon fanges opp, men
-  // fall tilbake på lageret med én gang nettet mangler.
+  // Sidevisninger: prøv nett først, slik at en ny versjon fanges opp. Med
+  // dårlig dekning på banen venter vi ikke mer enn to sekunder før appen
+  // startes fra lageret. Bare gyldige svar lagres, så en feilside eller en
+  // innloggingsside for trådløst nett aldri erstatter appen.
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req)
-        .then(function (svar) {
-          var kopi = svar.clone();
+    e.respondWith(new Promise(function (resolve) {
+      var ferdig = false;
+      function fraLager() {
+        return caches.match('./index.html').then(function (treff) {
+          return treff || caches.match('./');
+        });
+      }
+      function svar(r) { if (!ferdig && r) { ferdig = true; resolve(r); } }
+
+      var tidsfrist = setTimeout(function () {
+        fraLager().then(function (treff) {
+          if (treff) svar(treff);
+        });
+      }, 2000);
+
+      fetch(req).then(function (nett) {
+        if (nett && nett.ok && nett.type === 'basic') {
+          var kopi = nett.clone();
           caches.open(VERSJON).then(function (c) { c.put('./index.html', kopi); });
-          return svar;
-        })
-        .catch(function () {
-          return caches.match('./index.html').then(function (treff) {
-            return treff || caches.match('./');
-          });
-        })
-    );
+          clearTimeout(tidsfrist);
+          svar(nett);
+          return;
+        }
+        return fraLager().then(function (treff) {
+          clearTimeout(tidsfrist);
+          svar(treff || nett);
+        });
+      }).catch(function () {
+        fraLager().then(function (treff) {
+          clearTimeout(tidsfrist);
+          svar(treff || Response.error());
+        });
+      });
+    }));
     return;
   }
 

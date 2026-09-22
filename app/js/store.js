@@ -135,6 +135,15 @@
     return GolfDB.put('courses', row).then(function () { emit(); return row; });
   }
 
+  // Par for et hull. En 9-hullsbane som spilles to ganger bruker samme
+  // par på hull 10 til 18 som på 1 til 9.
+  function parFor(pars, hull) {
+    if (!pars || !pars.length) return null;
+    var p = pars[hull - 1];
+    if (typeof p !== 'number' && pars.length === 9 && hull > 9) p = pars[hull - 10];
+    return typeof p === 'number' && p > 0 ? p : null;
+  }
+
   function removeCourse(id) {
     cache.courses = cache.courses.filter(function (c) { return c.id !== id; });
     return GolfDB.remove('courses', id).then(function () { emit(); });
@@ -234,7 +243,7 @@
     });
   }
 
-  function saveHole(roundId, hole, strokes, extra) {
+  function holeRow(roundId, hole, strokes, extra) {
     var row = {
       id: holeId(roundId, hole),
       v: 1,
@@ -244,7 +253,15 @@
       updatedAt: Date.now()
     };
     if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
+    return row;
+  }
+
+  function putHole(row) {
     return GolfDB.put('holeScores', row).then(function () { return row; });
+  }
+
+  function saveHole(roundId, hole, strokes, extra) {
+    return putHole(holeRow(roundId, hole, strokes, extra));
   }
 
   // Alle hullrader gruppert på runde. Brukes av statistikken, som trenger
@@ -310,6 +327,7 @@
     course: course,
     saveCourse: saveCourse,
     removeCourse: removeCourse,
+    parFor: parFor,
 
     rounds: rounds,
     round: round,
@@ -322,6 +340,8 @@
     holes: holes,
     allHoles: allHoles,
     saveHole: saveHole,
+    holeRow: holeRow,
+    putHole: putHole,
     removeHolesAbove: removeHolesAbove,
 
     settings: settings,

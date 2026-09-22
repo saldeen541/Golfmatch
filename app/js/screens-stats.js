@@ -83,6 +83,15 @@
         if (valg.fane === 'baner') return;   // Baner har sitt eget valg
 
         var aar = GolfStats.aarene(alle);
+        var baner = GolfStats.baneOversikt(fullforte, GolfStore.courses());
+
+        // Et valgt år eller en valgt bane som ikke lenger har runder, for
+        // eksempel etter sletting, slippes. Ellers kan filteret bli stående
+        // uten at det vises noen knapp for å ta det bort.
+        if (valg.aar !== null && (aar.length < 2 || aar.indexOf(valg.aar) < 0)) valg.aar = null;
+        if (valg.baneId !== null && (baner.length < 2 ||
+            !baner.some(function (b) { return b.courseId === valg.baneId; }))) valg.baneId = null;
+
         if (aar.length > 1) {
           var aarRad = el('div', { class: 'chip-row' });
           aarRad.appendChild(filterChip('All time', valg.aar === null, function () {
@@ -96,7 +105,6 @@
           filterBoks.appendChild(aarRad);
         }
 
-        var baner = GolfStats.baneOversikt(fullforte, GolfStore.courses());
         if (baner.length > 1) {
           var baneRad = el('div', { class: 'chip-row' });
           baneRad.appendChild(filterChip('Alle baner', valg.baneId === null, function () {
@@ -352,7 +360,7 @@
         el('h2', { text: 'Lag' }),
         el('div', { class: 'card card-tight scroll' }, lt),
         el('p', { class: 'muted small', text:
-          'Beste og snitt er totalscore for laget. Tallet under snittet er mot par. Trykk på en rad for å se laget nærmere.' })
+          'Beste og snitt er totalscore for laget på runder med 18 hull, eller 9 hull for lag som ikke har spilt 18. Tallet under snittet er mot par. Trykk på en rad for å se laget nærmere.' })
       ]));
     }
 
@@ -445,7 +453,8 @@
 
     boks.appendChild(el('div', { class: 'keyfigures' }, [
       nokkeltall('Runder', String(d.runder)),
-      nokkeltall('Beste', d.beste !== null ? String(d.beste) : '–'),
+      nokkeltall('Beste', d.beste !== null ? String(d.beste) : '–',
+        d.hullISnitt ? d.hullISnitt + ' hull' : null),
       nokkeltall('Snitt', d.snitt !== null ? d.snitt.toFixed(1) : '–',
         d.motParSnitt !== null
           ? GolfScramble.motParTekst(Math.round(d.motParSnitt * 10) / 10) + ' mot par'
@@ -515,12 +524,7 @@
   function scrambleKort(k, nav) {
     var r = k.runde;
     var navn = r.playerIds.map(navnFor).join(', ');
-    var bane = r.courseId ? GolfStore.course(r.courseId) : null;
-    var motPar = null;
-    if (bane && bane.pars) {
-      var parSum = bane.pars.slice(0, r.holes).reduce(function (a, b) { return a + b; }, 0);
-      motPar = k.beste - parSum;
-    }
+    var motPar = k.besteMotPar;
 
     return el('button', {
       class: 'round-card', onclick: function () { nav('resultat', { id: r.id }); }
@@ -613,7 +617,8 @@
           nokkeltall('Runder', String(d.scrambleRunder)),
           nokkeltall('Beste', d.beste ? String(d.beste.total) : '–',
             d.beste ? d.beste.lagNavn + ', ' + UI.formatDate(d.beste.runde.startedAt) : null),
-          nokkeltall('Snitt', d.snitt !== null ? d.snitt.toFixed(1) : '–')
+          nokkeltall('Snitt', d.snitt !== null ? d.snitt.toFixed(1) : '–',
+            d.hullISnitt ? d.hullISnitt + ' hull' : null)
         ]);
         wrap.appendChild(el('section', { class: 'stack-tight' }, [
           el('h2', { text: 'Scramble' }), toppRad
