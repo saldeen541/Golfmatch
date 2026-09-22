@@ -284,6 +284,12 @@ h3 { font-size: var(--fs-md); }
   background: var(--surface-2);
   border-radius: var(--r-full);
   border: 1px solid var(--border);
+  /* Bryteren skal være så bred som knappene i den, ikke fylle raden.
+     Uten dette strekkes den ut når den står i et rutenett. */
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+  align-self: start;
 }
 
 .segmented button {

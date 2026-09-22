@@ -111,7 +111,7 @@
       if (!ok) return;
       GolfStore.setRoundStatus(runde.id, 'avbrutt').then(function () {
         UI.toast('Runden er avbrutt');
-        nav('hjem');
+        nav.rot('hjem');
       });
     });
   }
@@ -238,7 +238,7 @@
           avatarId: valgtAvatar
         }).then(function () {
           UI.toast(eksisterende ? 'Spilleren er oppdatert' : navn + ' er lagt til');
-          nav('spillere');
+          nav.tilbake();
         });
       }
     });
@@ -270,7 +270,7 @@
             if (!ok) return;
             GolfStore.setPlayerArchived(eksisterende.id, true).then(function () {
               UI.toast(eksisterende.name + ' er arkivert');
-              nav('spillere');
+              nav.tilbake();
             });
           });
         }
@@ -414,7 +414,7 @@
           }).then(function () {
             UI.toast(komplett ? 'Banen er lagret med par'
                               : 'Banen er lagret. Par kan fylles inn senere.');
-            nav('baner');
+            nav.tilbake();
           });
         }
       })
@@ -434,7 +434,7 @@
             if (!ok) return;
             GolfStore.removeCourse(eksisterende.id).then(function () {
               UI.toast('Banen er slettet');
-              nav('baner');
+              nav.tilbake();
             });
           });
         }

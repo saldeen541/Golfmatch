@@ -9,7 +9,7 @@
    fortsetter telefonen å bruke den gamle kopien.
    ========================================================================== */
 
-var VERSJON = 'golfapp-v2-0';
+var VERSJON = 'golfapp-v3-1';
 
 var FILER = [
   './',
@@ -22,8 +22,10 @@ var FILER = [
   './app/js/store.js',
   './app/js/ui.js',
   './app/js/backup.js',
+  './app/js/match.js',
   './app/js/screens.js',
   './app/js/screens-round.js',
+  './app/js/screens-match.js',
   './app/js/app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',

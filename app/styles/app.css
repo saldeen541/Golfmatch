@@ -63,7 +63,8 @@ main {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--s4) var(--s4) var(--s8);
+  /* Plass nederst til bunnmenyen, som ligger fast over innholdet. */
+  padding: var(--s4) var(--s4) calc(80px + env(safe-area-inset-bottom));
 }
 
 .stack { display: grid; gap: var(--s4); align-content: start; }
@@ -104,8 +105,12 @@ main {
    Bunnmeny
    -------------------------------------------------------------------------- */
 
+/* Bunnmenyen skal alltid ligge nederst på skjermen, uansett hvor kort
+   innholdet er. Derfor fast plassering, ikke sticky. */
 .tabbar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 20;
   display: grid;
@@ -345,6 +350,134 @@ button.list-row:hover { background: var(--surface-2); }
 }
 .par-input::-webkit-outer-spin-button,
 .par-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* --------------------------------------------------------------------------
+   Match: stilling, registrering og scoreboard
+   -------------------------------------------------------------------------- */
+
+/* Stillingen ligger klistret under topplinjen, slik at den alltid er synlig. */
+.standing {
+  position: sticky;
+  top: calc(56px + env(safe-area-inset-top));
+  z-index: 10;
+  display: flex;
+  gap: var(--s2);
+  overflow-x: auto;
+  margin: calc(var(--s4) * -1) calc(var(--s4) * -1) 0;
+  padding: var(--s2) var(--s4);
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+
+.standing-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 4px var(--s3) 4px 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+}
+.standing-item.is-leader { border-color: var(--good); background: var(--good-soft); }
+.standing-name { font-size: var(--fs-sm); font-weight: 650; }
+.standing-points { font-weight: 750; }
+
+.hole-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.hole-title { font-size: var(--fs-xl); font-weight: 750; }
+.hole-of { font-size: var(--fs-sm); }
+
+.stroke-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--border);
+}
+.stroke-row:first-of-type { border-top: none; }
+.stroke-name { flex: 1; font-weight: 650; }
+
+.stroke-input {
+  width: 64px;
+  height: var(--tap-min);
+  text-align: center;
+  font: inherit;
+  font-size: var(--fs-xl);
+  font-weight: 750;
+  color: var(--ink);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  -moz-appearance: textfield;
+}
+.stroke-input::-webkit-outer-spin-button,
+.stroke-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.hole-result {
+  margin: 0;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+.hole-result.is-done {
+  background: var(--good-soft);
+  color: var(--good);
+  font-weight: 700;
+}
+
+.hole-nav { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+
+.hole-link {
+  min-width: 28px;
+  padding: 2px 4px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  cursor: pointer;
+}
+.hole-link.is-now { background: var(--accent); color: var(--ink-on-accent); }
+
+.sb-player { display: inline-flex; align-items: center; gap: var(--s2); }
+.scoreboard td .sb-strokes { display: block; font-weight: 650; }
+.scoreboard td .sb-points {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  min-height: 1em;
+}
+.scoreboard td .sb-points.is-win { color: var(--good); font-weight: 750; }
+
+/* --------------------------------------------------------------------------
+   Resultat
+   -------------------------------------------------------------------------- */
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.result-row.is-winner { border-color: var(--good); background: var(--good-soft); }
+.result-place { width: 28px; font-weight: 750; color: var(--ink-2); }
+.result-name { flex: 1; display: grid; font-weight: 650; }
+.result-shared { font-size: var(--fs-xs); font-weight: 400; }
+.result-points { font-size: var(--fs-lg); font-weight: 750; }
 
 /* --------------------------------------------------------------------------
    Dialog

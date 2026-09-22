@@ -4,7 +4,7 @@ Denne filen er overleveringen mellom arbeidsøkter. Les den først i en ny økt,
 før du leser kode.
 
 **Sist oppdatert:** 22. september 2026
-**Nå:** fase 2 og PWA-skallet fra fase 7 er levert. Kim publiserer på GitHub Pages. Neste er fase 3, registrering i Match.
+**Nå:** fase 3 levert. Kim publiserer på GitHub Pages. Neste er fase 4, Scramble.
 
 ---
 
@@ -51,8 +51,8 @@ Disse er avklart med Kim og skal ikke tas opp igjen uten at han ber om det.
 | --- | --- | --- |
 | 1 | Designsystem og avatarer | Ferdig 22.09.2026. Alle tolv avatarer er med |
 | 2 | Appskall, spilleroppsett, banevalg, lagring i IndexedDB, sikkerhetskopi | Ferdig 22.09.2026 |
-| 3 | Match play: registrering, poengberegning, scoreboard, avslutt runde | Neste |
-| 4 | Scramble: lagoppsett, registrering, utslag, birdie og eagle | Ikke startet |
+| 3 | Match play: registrering, poengberegning, scoreboard, avslutt runde | Ferdig 22.09.2026 |
+| 4 | Scramble: lagoppsett, registrering, utslag, birdie og eagle | Neste |
 | 5 | Statistikk: Match-tabell, seierspall, spilleroversikt og rundekort for Scramble | Ikke startet |
 | 6 | Eksportrapport som bilde, klar for Discord | Ikke startet |
 | 7 | PWA-skall: manifest, service worker, ikoner, offline-test | Ferdig 22.09.2026, framskyndet |
@@ -92,6 +92,17 @@ Disse er avklart med Kim og skal ikke tas opp igjen uten at han ber om det.
 | `icons/` | Appikoner: 192, 512, maskable og apple-touch-icon |
 | `PUBLISERING.md` | Stegvis oppskrift for GitHub Pages og installasjon på iPhone |
 
+## Levert i fase 3
+
+| Fil | Innhold |
+| --- | --- |
+| `app/js/match.js` | Poengreglene i Match som rene funksjoner: hullpoeng, totaler, sluttstilling med delte plasseringer, og poeng til all time-tabellen i begge modeller |
+| `app/js/screens-match.js` | Registrering hull for hull, stilling klistret øverst, scoreboard og resultatskjerm |
+
+Rettelser samtidig: bunnmenyen ligger nå fast nederst på skjermen, tomtilstanden
+i rundeoppsettet får hele bredden, og tilbakeknappen går ett hakk bakover i en
+navigasjonsstabel i stedet for til en fast skjerm.
+
 Kildefilene under `app/` er de appen bygges videre av i fase 2.
 `Golfapp-designsystem.html` er en sammenslått kopi, og må bygges på nytt hvis
 `tokens.css` eller `avatars.js` endres.
@@ -105,9 +116,10 @@ Kildefilene under `app/` er de appen bygges videre av i fase 2.
    nettapp med flere filer kjører ikke der. Særlig verdt å sjekke etter
    installasjon: at lagringen overlever at appen lukkes, at den starter i
    flymodus, og at delefunksjonen dukker opp ved sikkerhetskopi.
-2. **Rundevisningen er tom med vilje.** Registrering hull for hull kommer i
-   fase 3 (Match) og fase 4 (Scramble). Runder som opprettes nå lagres
-   riktig og kan avbrytes eller slettes.
+2. **Scramble-runder har ennå ingen registrering.** Den kommer i fase 4.
+   Match er komplett: registrering, poeng, scoreboard, avslutning og resultat.
+3. **Statistikk er fortsatt en plassholder.** Kommer i fase 5. Resultatskjermen
+   viser allerede hva runden gir til all time-tabellen.
 
 ---
 

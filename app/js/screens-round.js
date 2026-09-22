@@ -31,15 +31,16 @@
     var spillerBoks = el('div', { class: 'pick-grid' });
     var spillerTeller = el('p', { class: 'muted', text: 'Ingen valgt. Maks fire.' });
 
-    if (!spillere.length) {
-      spillerBoks.appendChild(UI.emptyState(
-        'Ingen spillere ennå',
-        'Legg til spillerne først, så kan du starte runden.',
-        el('button', {
-          class: 'btn btn-secondary', text: 'Gå til spillere',
-          onclick: function () { nav('spillere'); }
-        })));
-    } else {
+    // Tomtilstanden får hele bredden, ikke én rute i rutenettet.
+    var ingenSpillere = !spillere.length ? UI.emptyState(
+      'Ingen spillere ennå',
+      'Legg til spillerne først, så kan du starte runden.',
+      el('button', {
+        class: 'btn btn-secondary', text: 'Gå til spillere',
+        onclick: function () { nav('spillere'); }
+      })) : null;
+
+    if (spillere.length) {
       spillere.forEach(function (p) {
         var knapp = el('button', {
           type: 'button', class: 'pick-card', 'aria-pressed': 'false',
@@ -327,7 +328,7 @@
         });
       }).then(function (runde) {
         UI.toast('Runden er startet');
-        nav('runde', { id: runde.id });
+        nav.erstatt('runde', { id: runde.id });
       });
     }
 
@@ -335,8 +336,8 @@
 
     wrap.appendChild(el('section', { class: 'card stack' }, [
       el('p', { class: 'label', text: 'Hvem spiller?' }),
-      spillerTeller,
-      spillerBoks
+      ingenSpillere ? null : spillerTeller,
+      ingenSpillere || spillerBoks
     ]));
 
     wrap.appendChild(el('section', { class: 'card stack' }, [
@@ -371,6 +372,12 @@
   Screens.runde = function (nav, params) {
     var r = GolfStore.round(params.id);
     if (!r) return UI.emptyState('Fant ikke runden', 'Den kan ha blitt slettet.');
+
+    // Ferdige runder vises som resultat, ikke som registrering.
+    if (r.status !== 'pagar') return Screens.resultat(nav, params);
+
+    // Match registreres i sin egen skjerm. Scramble kommer i fase 4.
+    if (r.mode === 'match') return Screens['match-runde'](nav, params, r);
 
     var wrap = el('div', { class: 'stack' });
 
@@ -418,7 +425,7 @@
             if (!ok) return;
             GolfStore.setRoundStatus(r.id, 'avbrutt').then(function () {
               UI.toast('Runden er avbrutt');
-              nav('hjem');
+              nav.rot('hjem');
             });
           });
         }
@@ -435,7 +442,7 @@
             if (!ok) return;
             GolfStore.removeRound(r.id).then(function () {
               UI.toast('Runden er slettet');
-              nav('hjem');
+              nav.rot('hjem');
             });
           });
         }
@@ -490,7 +497,7 @@
         }).then(function (gjort) {
           if (gjort === null) return;
           UI.toast('Dataene er gjenopprettet');
-          nav('innstillinger');
+          nav.rot('innstillinger');
         }).catch(function (err) {
           UI.toast(err.message || 'Klarte ikke å lese filen');
         }).then(function () { filFelt.value = ''; });
@@ -514,7 +521,7 @@
           GolfBackup.exportBackup().then(function (hvordan) {
             if (hvordan === 'avbrutt') return;
             UI.toast('Sikkerhetskopi ' + hvordan);
-            nav('innstillinger');
+            nav.rot('innstillinger');
           }).catch(function () { UI.toast('Klarte ikke å lage kopi'); });
         }
       }),
@@ -586,7 +593,7 @@
         }).then(function (ok) {
           if (!ok) return;
           return GolfDB.replaceAll({}).then(function () { return GolfStore.reload(); })
-            .then(function () { UI.toast('All data er slettet'); nav('hjem'); });
+            .then(function () { UI.toast('All data er slettet'); nav.rot('hjem'); });
         });
       }
     }));

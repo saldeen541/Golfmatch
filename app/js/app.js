@@ -9,38 +9,84 @@
 
   var RUTER = {
     'hjem':          { title: 'Golfapp',        tab: 'hjem' },
-    'ny-runde':      { title: 'Ny runde',       tab: 'hjem',          back: 'hjem' },
-    'runde':         { title: 'Runde',          tab: 'hjem',          back: 'hjem' },
-    'spillere':      { title: 'Spillere',       tab: 'hjem',          back: 'hjem' },
-    'spiller':       { title: 'Spiller',        tab: 'hjem',          back: 'spillere' },
-    'baner':         { title: 'Baner',          tab: 'hjem',          back: 'hjem' },
-    'bane':          { title: 'Bane',           tab: 'hjem',          back: 'baner' },
+    'ny-runde':      { title: 'Ny runde',       tab: 'hjem' },
+    'runde':         { title: 'Runde',          tab: 'hjem' },
+    'resultat':      { title: 'Resultat',       tab: 'hjem' },
+    'spillere':      { title: 'Spillere',       tab: 'hjem' },
+    'spiller':       { title: 'Spiller',        tab: 'hjem' },
+    'baner':         { title: 'Baner',          tab: 'hjem' },
+    'bane':          { title: 'Bane',           tab: 'hjem' },
     'statistikk':    { title: 'Statistikk',     tab: 'statistikk' },
     'innstillinger': { title: 'Innstillinger',  tab: 'innstillinger' }
   };
 
-  var naa = { rute: 'hjem', params: {} };
+  /* Navigasjonen er en stabel. Tilbakeknappen tar deg alltid nøyaktig ett
+     hakk bakover, dit du faktisk kom fra, og ikke til en fast skjerm.
+     Stabelen speiles i nettleserens historikk, slik at tilbakeknappen på
+     Android og sveip tilbake virker på samme måte. */
 
-  function nav(rute, params) {
-    if (!RUTER[rute]) rute = 'hjem';
-    naa = { rute: rute, params: params || {} };
+  var stabel = [{ rute: 'hjem', params: {} }];
+
+  function naa() { return stabel[stabel.length - 1]; }
+
+  function settStabel(ny, erstatt) {
+    stabel = ny;
+    var tilstand = { d: stabel.length - 1 };
+    try {
+      if (erstatt) history.replaceState(tilstand, '');
+      else history.pushState(tilstand, '');
+    } catch (e) { /* historikk-API kan være stengt, appen virker likevel */ }
     tegn();
     window.scrollTo(0, 0);
   }
 
+  function nav(rute, params) {
+    if (!RUTER[rute]) rute = 'hjem';
+    settStabel(stabel.concat([{ rute: rute, params: params || {} }]), false);
+  }
+
+  // Erstatter toppen av stabelen. Brukes når man har lagret noe og ikke
+  // skal kunne gå «tilbake» til skjemaet man nettopp fullførte.
+  nav.erstatt = function (rute, params) {
+    if (!RUTER[rute]) rute = 'hjem';
+    settStabel(stabel.slice(0, -1).concat([{ rute: rute, params: params || {} }]), true);
+  };
+
+  // Nullstiller stabelen. Brukes av bunnmenyen.
+  nav.rot = function (rute, params) {
+    if (!RUTER[rute]) rute = 'hjem';
+    settStabel([{ rute: rute, params: params || {} }], true);
+  };
+
+  nav.tilbake = function () {
+    if (stabel.length <= 1) return;
+    try { history.back(); }
+    catch (e) { settStabel(stabel.slice(0, -1), true); }
+  };
+
+  window.addEventListener('popstate', function (e) {
+    var d = e.state && typeof e.state.d === 'number' ? e.state.d : 0;
+    var ny = stabel.slice(0, d + 1);
+    if (!ny.length) ny = [{ rute: 'hjem', params: {} }];
+    stabel = ny;
+    tegn();
+    window.scrollTo(0, 0);
+  });
+
   function tegn() {
-    var def = RUTER[naa.rute];
+    var her = naa();
+    var def = RUTER[her.rute];
     var innhold = document.getElementById('innhold');
     var tittel = document.getElementById('sidetittel');
     var tilbake = document.getElementById('tilbake');
 
     tittel.textContent = def.title;
-    tilbake.hidden = !def.back;
-    tilbake.onclick = function () { nav(def.back); };
+    tilbake.hidden = stabel.length <= 1;
+    tilbake.onclick = nav.tilbake;
 
     UI.clear(innhold);
-    var bygger = Screens[naa.rute];
-    innhold.appendChild(bygger ? bygger(nav, naa.params) : el('p', { text: 'Ukjent skjerm' }));
+    var bygger = Screens[her.rute];
+    innhold.appendChild(bygger ? bygger(nav, her.params) : el('p', { text: 'Ukjent skjerm' }));
 
     Array.prototype.forEach.call(document.querySelectorAll('.tabbar button'), function (b) {
       b.setAttribute('aria-current', String(b.dataset.tab === def.tab));
@@ -66,6 +112,7 @@
       ['GolfStore', 'app/js/store.js'],
       ['UI', 'app/js/ui.js'],
       ['GolfBackup', 'app/js/backup.js'],
+      ['GolfMatch', 'app/js/match.js'],
       ['Screens', 'app/js/screens.js']
     ];
     return kreves.filter(function (par) { return !global[par[0]]; })
@@ -109,13 +156,13 @@
     }
 
     Array.prototype.forEach.call(document.querySelectorAll('.tabbar button'), function (b) {
-      b.addEventListener('click', function () { nav(b.dataset.route); });
+      b.addEventListener('click', function () { nav.rot(b.dataset.route); });
     });
 
     GolfStore.load().then(function () {
       document.getElementById('laster').hidden = true;
       document.getElementById('app').hidden = false;
-      nav('hjem');
+      nav.rot('hjem');
     }).catch(function (err) {
       console.error(err);
       document.getElementById('laster').textContent =

@@ -219,6 +219,43 @@
       .then(function () { emit(); });
   }
 
+  /* ---- score hull for hull --------------------------------------------
+     Radene skrives fortløpende under runden, én per hull. Det er dette som
+     gjør at en avbrutt eller pauset runde kan gjenopptas.
+     -------------------------------------------------------------------- */
+
+  function holeId(roundId, hole) { return roundId + ':' + hole; }
+
+  function holes(roundId) {
+    return GolfDB.all('holeScores').then(function (rows) {
+      return rows
+        .filter(function (h) { return h.roundId === roundId; })
+        .sort(function (a, b) { return a.hole - b.hole; });
+    });
+  }
+
+  function saveHole(roundId, hole, strokes, extra) {
+    var row = {
+      id: holeId(roundId, hole),
+      v: 1,
+      roundId: roundId,
+      hole: hole,
+      strokes: strokes || {},
+      updatedAt: Date.now()
+    };
+    if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
+    return GolfDB.put('holeScores', row).then(function () { return row; });
+  }
+
+  // Brukes når antall hull kortes ned underveis.
+  function removeHolesAbove(roundId, maxHole) {
+    return holes(roundId).then(function (rows) {
+      return Promise.all(rows
+        .filter(function (h) { return h.hole > maxHole; })
+        .map(function (h) { return GolfDB.remove('holeScores', h.id); }));
+    });
+  }
+
   /* ---- innstillinger -------------------------------------------------- */
 
   function settings() { return cache.settings; }
@@ -265,6 +302,10 @@
     saveRound: saveRound,
     setRoundStatus: setRoundStatus,
     removeRound: removeRound,
+
+    holes: holes,
+    saveHole: saveHole,
+    removeHolesAbove: removeHolesAbove,
 
     settings: settings,
     saveSettings: saveSettings,
