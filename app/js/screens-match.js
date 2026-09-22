@@ -352,9 +352,7 @@
      Resultat
      ====================================================================== */
 
-  Screens.resultat = function (nav, params) {
-    var runde = GolfStore.round(params.id);
-    if (!runde) return UI.emptyState('Fant ikke runden', 'Den kan ha blitt slettet.');
+  Screens['match-resultat'] = function (nav, params, runde) {
 
     var wrap = el('div', { class: 'stack' });
     wrap.appendChild(el('p', { class: 'muted', text: 'Henter resultatet …' }));
@@ -410,14 +408,17 @@
         allTimeListe
       ]));
 
-      wrap.appendChild(el('section', { class: 'notice' }, [
-        el('p', { text: 'Eksport av rapport til Discord kommer i fase 6.' })
-      ]));
+      var bane = runde.courseId ? GolfStore.course(runde.courseId) : null;
+      wrap.appendChild(Screens.scorekort(runde, hullRader, bane));
+
+      wrap.appendChild(Screens.delRapportKnapp(runde, hullRader, bane));
 
       wrap.appendChild(el('button', {
-        class: 'btn btn-primary btn-block', text: 'Ferdig',
+        class: 'btn btn-secondary btn-block', text: 'Ferdig',
         onclick: function () { nav.rot('hjem'); }
       }));
+
+      wrap.appendChild(Screens.slettRundeKnapp(runde, nav));
     });
 
     return wrap;

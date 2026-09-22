@@ -247,6 +247,22 @@
     return GolfDB.put('holeScores', row).then(function () { return row; });
   }
 
+  // Alle hullrader gruppert på runde. Brukes av statistikken, som trenger
+  // alle rundene samtidig.
+  function allHoles() {
+    return GolfDB.all('holeScores').then(function (rows) {
+      var kart = {};
+      rows.forEach(function (h) {
+        if (!kart[h.roundId]) kart[h.roundId] = [];
+        kart[h.roundId].push(h);
+      });
+      Object.keys(kart).forEach(function (id) {
+        kart[id].sort(function (a, b) { return a.hole - b.hole; });
+      });
+      return kart;
+    });
+  }
+
   // Brukes når antall hull kortes ned underveis.
   function removeHolesAbove(roundId, maxHole) {
     return holes(roundId).then(function (rows) {
@@ -304,6 +320,7 @@
     removeRound: removeRound,
 
     holes: holes,
+    allHoles: allHoles,
     saveHole: saveHole,
     removeHolesAbove: removeHolesAbove,
 

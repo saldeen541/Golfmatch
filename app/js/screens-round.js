@@ -374,10 +374,257 @@
     if (!r) return UI.emptyState('Fant ikke runden', 'Den kan ha blitt slettet.');
 
     // Ferdige runder vises som resultat, ikke som registrering.
+    if (r.status === 'avbrutt') return Screens['runde-detaljer'](nav, params);
     if (r.status !== 'pagar') return Screens.resultat(nav, params);
 
-    // Match registreres i sin egen skjerm. Scramble kommer i fase 4.
-    if (r.mode === 'match') return Screens['match-runde'](nav, params, r);
+    return r.mode === 'match'
+      ? Screens['match-runde'](nav, params, r)
+      : Screens['scramble-runde'](nav, params, r);
+  };
+
+  /* Sletteknappen er den samme overalt: bekreftelse først, og teksten sier
+     hva som faktisk skjer. Statistikken regnes ut fra rundene ved visning,
+     så tabeller, seierspall og banestatistikk oppdaterer seg av seg selv
+     når runden er borte. */
+  Screens.slettRundeKnapp = function (runde, nav) {
+    return el('button', {
+      class: 'btn btn-danger btn-block',
+      text: 'Slett runden',
+      onclick: function () {
+        var navn = runde.playerIds.map(function (id) {
+          var p = GolfStore.player(id);
+          return p ? p.name : 'Ukjent';
+        }).join(', ');
+        UI.confirm({
+          title: 'Slette runden?',
+          body: (runde.mode === 'match' ? 'Match' : 'Scramble') + ' på ' +
+                runde.courseName + ' ' + UI.formatDate(runde.startedAt) +
+                ', med ' + navn + '. Runden fjernes fra historikken, og ' +
+                'poeng og statistikk regnes om uten den. Dette kan ikke angres.',
+          confirmText: 'Slett runden',
+          cancelText: 'Behold',
+          danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          GolfStore.removeRound(runde.id).then(function () {
+            UI.toast('Runden er slettet');
+            nav.rot('hjem');
+          });
+        });
+      }
+    });
+  };
+
+  /* Del rapporten som bilde. Samme knapp i begge resultatskjermene. */
+  Screens.delRapportKnapp = function (runde, hullRader, bane) {
+    var knapp = el('button', {
+      class: 'btn btn-primary btn-block',
+      text: 'Del rapport som bilde',
+      onclick: function () {
+        knapp.disabled = true;
+        var opprinnelig = knapp.textContent;
+        knapp.textContent = 'Lager bildet …';
+        GolfRapport.del(runde, hullRader, bane).then(function (hvordan) {
+          if (hvordan !== 'avbrutt') UI.toast('Rapporten er ' + hvordan);
+        }).catch(function (e) {
+          console.error(e);
+          UI.toast('Klarte ikke å lage bildet');
+        }).then(function () {
+          knapp.disabled = false;
+          knapp.textContent = opprinnelig;
+        });
+      }
+    });
+    return knapp;
+  };
+
+  /* Scorekortet hull for hull, slik det vises i appen. */
+  Screens.scorekort = function (runde, hullRader, bane) {
+    var tabell = el('table', { class: 'scoreboard' });
+    var erMatch = runde.mode === 'match';
+    var lag = erMatch ? null : (runde.teams && runde.teams.length
+      ? runde.teams : [{ name: 'Laget', playerIds: runde.playerIds.slice() }]);
+    var pars = bane && bane.pars;
+
+    function rad(hull) {
+      for (var i = 0; i < hullRader.length; i++) {
+        if (hullRader[i].hole === hull) return hullRader[i];
+      }
+      return null;
+    }
+
+    var hode = el('tr', null, [el('th', { text: erMatch ? 'Spiller' : 'Lag' })]);
+    for (var h = 1; h <= runde.holes; h++) hode.appendChild(el('th', { text: String(h) }));
+    hode.appendChild(el('th', { text: 'Sum' }));
+    tabell.appendChild(el('thead', null, hode));
+
+    if (pars) {
+      var parRad = el('tr', { class: 'par-rad' }, [el('td', { text: 'Par' })]);
+      for (var h2 = 1; h2 <= runde.holes; h2++) {
+        parRad.appendChild(el('td', { class: 'num', text: pars[h2 - 1] ? String(pars[h2 - 1]) : '–' }));
+      }
+      parRad.appendChild(el('td', { class: 'num', text:
+        String(pars.slice(0, runde.holes).reduce(function (a, b) { return a + b; }, 0)) }));
+      tabell.appendChild(el('tbody', null, parRad));
+    }
+
+    var kropp = el('tbody');
+    if (erMatch) {
+      var perHull = GolfMatch.poengPerHull(hullRader, runde.playerIds);
+      var sum = GolfMatch.totaler(hullRader, runde.playerIds);
+      var best = Math.max.apply(null, runde.playerIds.map(function (id) { return sum[id]; }));
+      runde.playerIds.forEach(function (id, i) {
+        var p = GolfStore.player(id);
+        var tr = el('tr', { dataset: { leader: String(sum[id] === best && best > 0) } }, [
+          el('td', null, el('span', { class: 'sb-player' }, [
+            UI.avatar(p ? p.avatarId : 'rev', 32, UI.playerColorVar(i)),
+            el('span', { text: p ? p.name : 'Ukjent' })
+          ]))
+        ]);
+        for (var h3 = 1; h3 <= runde.holes; h3++) {
+          var r3 = rad(h3);
+          var slag = r3 && r3.strokes ? r3.strokes[id] : undefined;
+          var poeng = perHull[h3] ? perHull[h3][id] : 0;
+          tr.appendChild(el('td', { class: 'num' }, [
+            el('span', { class: 'sb-strokes', text: slag === undefined ? '–' : String(slag) }),
+            el('span', { class: 'sb-points' + (poeng === 1 ? ' is-win' : ''),
+              text: perHull[h3] ? halv(poeng) : '' })
+          ]));
+        }
+        tr.appendChild(el('td', { class: 'total num', text: halv(sum[id]) }));
+        kropp.appendChild(tr);
+      });
+    } else {
+      var st = GolfScramble.stilling(hullRader, lag.length);
+      lag.forEach(function (l, i) {
+        var leder = lag.length > 1 && GolfScramble.total(hullRader, i) > 0 &&
+          st.filter(function (x) { return x.place === 1; })
+            .some(function (x) { return x.teamIndex === i; });
+        var tr = el('tr', { dataset: { leader: String(leder) } },
+          [el('td', { text: lag.length > 1 ? l.name : 'Slag' })]);
+        for (var h4 = 1; h4 <= runde.holes; h4++) {
+          var d = GolfScramble.lagData(rad(h4), i);
+          tr.appendChild(el('td', { class: 'num' }, [
+            el('span', { class: 'sb-strokes', text: d && d.strokes ? String(d.strokes) : '–' }),
+            el('span', { class: 'sb-points' + (d && d.mark ? ' is-win' : ''),
+              text: d && d.mark ? (d.mark === 'birdie' ? 'B' : d.mark === 'eagle' ? 'E' : 'HIO') : '' })
+          ]));
+        }
+        tr.appendChild(el('td', { class: 'total num', text: String(GolfScramble.total(hullRader, i)) }));
+        kropp.appendChild(tr);
+      });
+    }
+    tabell.appendChild(kropp);
+
+    return el('section', { class: 'stack-tight' }, [
+      el('h2', { text: 'Scorekort' }),
+      el('p', { class: 'muted small', text: erMatch
+        ? 'Øverste tall er slag, nederste er poeng på hullet.'
+        : 'Slag per hull. B, E og HIO er birdie, eagle og hole in one.' }),
+      el('div', { class: 'card card-tight scroll' }, tabell)
+    ]);
+  };
+
+  function halv(n) {
+    if (n === 0) return '0';
+    var hel = Math.floor(n);
+    if (hel === 0) return '½';
+    return hel + (n % 1 !== 0 ? '½' : '');
+  }
+
+  /* ======================================================================
+     Historikk: alle runder
+     ====================================================================== */
+
+  Screens.historikk = function (nav) {
+    var wrap = el('div', { class: 'stack' });
+    var alle = GolfStore.rounds().filter(function (r) { return r.status !== 'pagar'; });
+
+    if (!alle.length) {
+      wrap.appendChild(UI.emptyState('Ingen runder ennå',
+        'Når dere har spilt ferdig en runde, dukker den opp her.'));
+      return wrap;
+    }
+
+    var filter = 'alle';
+    var listeBoks = el('div', { class: 'stack' });
+
+    var filterRad = el('div', { class: 'chip-row' }, [
+      filterKnapp('alle', 'Alle'),
+      filterKnapp('match', 'Match'),
+      filterKnapp('scramble', 'Scramble'),
+      filterKnapp('avbrutt', 'Avbrutte')
+    ]);
+
+    function filterKnapp(id, tekst) {
+      return el('button', {
+        type: 'button', class: 'chip chip-sm', text: tekst,
+        dataset: { f: id }, 'aria-pressed': String(filter === id),
+        onclick: function () {
+          filter = id;
+          Array.prototype.forEach.call(filterRad.children, function (b) {
+            b.setAttribute('aria-pressed', String(b.dataset.f === filter));
+          });
+          tegnListe();
+        }
+      });
+    }
+
+    function tegnListe() {
+      UI.clear(listeBoks);
+      var vist = alle.filter(function (r) {
+        if (filter === 'alle') return true;
+        if (filter === 'avbrutt') return r.status === 'avbrutt';
+        return r.mode === filter && r.status === 'fullfort';
+      });
+      if (!vist.length) {
+        listeBoks.appendChild(UI.emptyState('Ingen runder i utvalget', ''));
+        return;
+      }
+      listeBoks.appendChild(el('p', { class: 'muted small', text:
+        UI.plural(vist.length, 'runde', 'runder') + '. Åpne en runde for å se den eller slette den.' }));
+      vist.forEach(function (r) { listeBoks.appendChild(rundeKort(r, nav)); });
+    }
+
+    wrap.appendChild(filterRad);
+    wrap.appendChild(listeBoks);
+    tegnListe();
+    return wrap;
+  };
+
+  function rundeKort(r, nav) {
+    var navn = r.playerIds.map(function (id) {
+      var p = GolfStore.player(id);
+      return p ? p.name : 'Ukjent';
+    }).join(', ');
+    return el('button', {
+      class: 'round-card', onclick: function () { nav('runde', { id: r.id }); }
+    }, [
+      el('div', { class: 'round-card-top' }, [
+        el('span', { class: 'round-card-date', text: UI.formatDate(r.startedAt) }),
+        r.status === 'avbrutt'
+          ? el('span', { class: 'badge badge-avbrutt', text: 'Avbrutt' })
+          : el('span', { class: 'badge badge-solo', text: r.mode === 'match' ? 'Match' : 'Scramble' }),
+        el('span', { class: 'badge badge-solo', text: r.holes + ' hull' })
+      ]),
+      el('span', { class: 'round-card-course', text: r.courseName }),
+      el('span', { class: 'round-card-players muted', text: navn })
+    ]);
+  }
+
+  // Resultatskjermen velger visning ut fra spillmodus.
+  Screens.resultat = function (nav, params) {
+    var r = GolfStore.round(params.id);
+    if (!r) return UI.emptyState('Fant ikke runden', 'Den kan ha blitt slettet.');
+    return r.mode === 'match'
+      ? Screens['match-resultat'](nav, params, r)
+      : Screens['scramble-resultat'](nav, params, r);
+  };
+
+  // Behold den gamle detaljvisningen tilgjengelig for avbrutte runder.
+  Screens['runde-detaljer'] = function (nav, params) {
+    var r = GolfStore.round(params.id);
+    if (!r) return UI.emptyState('Fant ikke runden', 'Den kan ha blitt slettet.');
 
     var wrap = el('div', { class: 'stack' });
 
@@ -431,22 +678,7 @@
         }
       }));
     } else {
-      wrap.appendChild(el('button', {
-        class: 'btn btn-danger btn-block', text: 'Slett runden',
-        onclick: function () {
-          UI.confirm({
-            title: 'Slette runden?',
-            body: 'Den forsvinner fra historikken og statistikken. Dette kan ikke angres.',
-            confirmText: 'Slett', danger: true
-          }).then(function (ok) {
-            if (!ok) return;
-            GolfStore.removeRound(r.id).then(function () {
-              UI.toast('Runden er slettet');
-              nav.rot('hjem');
-            });
-          });
-        }
-      }));
+      wrap.appendChild(Screens.slettRundeKnapp(r, nav));
     }
 
     return wrap;
@@ -455,18 +687,6 @@
   function statusTekst(s) {
     return s === 'pagar' ? 'pågår' : s === 'fullfort' ? 'fullført' : 'avbrutt';
   }
-
-  /* ======================================================================
-     Statistikk - kommer i fase 5
-     ====================================================================== */
-
-  Screens.statistikk = function () {
-    return el('div', { class: 'stack' }, [
-      UI.emptyState(
-        'Statistikk kommer i fase 5',
-        'Da får du Match-tabellen med seierspall, spilleroversikt for Scramble og rundekort du kan åpne for detaljer.')
-    ]);
-  };
 
   /* ======================================================================
      Innstillinger

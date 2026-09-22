@@ -12,11 +12,13 @@
     'ny-runde':      { title: 'Ny runde',       tab: 'hjem' },
     'runde':         { title: 'Runde',          tab: 'hjem' },
     'resultat':      { title: 'Resultat',       tab: 'hjem' },
+    'historikk':     { title: 'Alle runder',    tab: 'hjem' },
     'spillere':      { title: 'Spillere',       tab: 'hjem' },
     'spiller':       { title: 'Spiller',        tab: 'hjem' },
     'baner':         { title: 'Baner',          tab: 'hjem' },
     'bane':          { title: 'Bane',           tab: 'hjem' },
-    'statistikk':    { title: 'Statistikk',     tab: 'statistikk' },
+    'statistikk':      { title: 'Statistikk',    tab: 'statistikk' },
+    'bane-statistikk': { title: 'Bane',          tab: 'statistikk' },
     'innstillinger': { title: 'Innstillinger',  tab: 'innstillinger' }
   };
 
@@ -113,6 +115,9 @@
       ['UI', 'app/js/ui.js'],
       ['GolfBackup', 'app/js/backup.js'],
       ['GolfMatch', 'app/js/match.js'],
+      ['GolfScramble', 'app/js/scramble.js'],
+      ['GolfStats', 'app/js/stats.js'],
+      ['GolfRapport', 'app/js/rapport.js'],
       ['Screens', 'app/js/screens.js']
     ];
     return kreves.filter(function (par) { return !global[par[0]]; })

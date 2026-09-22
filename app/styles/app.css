@@ -461,6 +461,31 @@ button.list-row:hover { background: var(--surface-2); }
 .scoreboard td .sb-points.is-win { color: var(--good); font-weight: 750; }
 
 /* --------------------------------------------------------------------------
+   Scramble
+   -------------------------------------------------------------------------- */
+
+.stack-tight { display: grid; gap: var(--s2); }
+.small { font-size: var(--fs-sm); }
+
+.team-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+.team-name { font-weight: 700; }
+
+.chip-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--s3) 0 4px;
+}
+
+.standing-par { font-size: var(--fs-xs); }
+
+/* --------------------------------------------------------------------------
    Resultat
    -------------------------------------------------------------------------- */
 
@@ -478,6 +503,171 @@ button.list-row:hover { background: var(--surface-2); }
 .result-name { flex: 1; display: grid; font-weight: 650; }
 .result-shared { font-size: var(--fs-xs); font-weight: 400; }
 .result-points { font-size: var(--fs-lg); font-weight: 750; }
+
+/* --------------------------------------------------------------------------
+   Statistikk
+   -------------------------------------------------------------------------- */
+
+.chip-sm { min-height: 34px; padding: 0 var(--s3); font-size: var(--fs-sm); }
+
+.scoreboard .par-rad td {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-weight: 650;
+  background: var(--surface-2);
+}
+
+.klikkbar { cursor: pointer; }
+.klikkbar:hover td { background: var(--surface-2); }
+
+.team-avatars { display: flex; justify-content: center; gap: -8px; }
+.team-avatars > * { margin-left: -10px; border: 2px solid var(--surface-1); border-radius: var(--r-full); }
+.team-avatars > *:first-child { margin-left: 0; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.stat-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+.stat-table th, .stat-table td {
+  padding: var(--s2);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.stat-table thead th {
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.stat-table th:first-child,
+.stat-table td:first-child {
+  text-align: left;
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  background: var(--surface-1);
+}
+.stat-table tbody tr:last-child td { border-bottom: none; }
+
+.stat-points { line-height: 1.15; }
+.stat-points strong { font-size: var(--fs-lg); font-weight: 750; }
+.stat-sub { display: block; font-size: var(--fs-xs); color: var(--ink-3); font-weight: 400; }
+
+/* --------------------------------------------------------------------------
+   Seierspall
+   -------------------------------------------------------------------------- */
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+  align-items: end;
+}
+
+.podium-slot { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.podium-name { font-size: var(--fs-sm); font-weight: 650; }
+
+.podium-block {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  align-content: center;
+  width: 100%;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+.pall-1 { min-height: 88px; background: var(--good-soft); border-color: var(--good); }
+.pall-2 { min-height: 64px; }
+.pall-3 { min-height: 48px; }
+
+.podium-place { font-size: var(--fs-xl); font-weight: 750; line-height: 1; }
+.podium-points { font-size: var(--fs-xs); color: var(--ink-2); }
+
+/* --------------------------------------------------------------------------
+   Rundekort med score
+   -------------------------------------------------------------------------- */
+
+.round-card-score { display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap; }
+.score-big { font-size: var(--fs-xl); font-weight: 750; }
+.score-par { font-size: var(--fs-sm); }
+
+/* --------------------------------------------------------------------------
+   Nøkkeltall og snitt per hull
+   -------------------------------------------------------------------------- */
+
+.keyfigures { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+
+.keyfigure {
+  display: grid;
+  gap: 2px;
+  padding: var(--s3);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  text-align: center;
+}
+.keyfigure-label {
+  font-size: var(--fs-xs); font-weight: 650; color: var(--ink-3);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.keyfigure-value { font-size: var(--fs-xl); font-weight: 750; line-height: 1.1; }
+.keyfigure-sub { font-size: var(--fs-xs); color: var(--ink-3); }
+
+.hole-bars { display: grid; gap: 4px; }
+
+.hole-bar {
+  display: grid;
+  grid-template-columns: 24px 48px 1fr 48px;
+  align-items: center;
+  gap: var(--s2);
+  padding: 4px var(--s2);
+  border-radius: var(--r-sm);
+}
+.hole-bar:nth-child(odd) { background: var(--surface-2); }
+.hole-bar-nr { font-weight: 700; }
+.hole-bar-par { font-size: var(--fs-xs); }
+.hole-bar-track {
+  position: relative;
+  height: 12px;
+  background: var(--surface-3);
+  border-radius: var(--r-full);
+}
+
+.hole-bar-fill { position: absolute; top: 0; bottom: 0; border-radius: var(--r-full); }
+
+/* Uten par: vanlig stolpe fra venstre. */
+.hole-bar-fill.is-plain { left: 0; background: var(--border-strong); }
+
+/* Med par: stolpene vokser ut fra null i midten, under par til venstre og
+   over par til høyre. Tallet står alltid ved siden av, så fargen er aldri
+   det eneste som skiller dem. */
+.hole-bars.fra-null .hole-bar-zero {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--border-strong);
+}
+.hole-bar-fill.is-under {
+  right: 50%;
+  background: var(--good);
+  border-radius: var(--r-full) 0 0 var(--r-full);
+}
+.hole-bar-fill.is-over {
+  left: 50%;
+  background: var(--danger);
+  border-radius: 0 var(--r-full) var(--r-full) 0;
+}
+.hole-bar-value { font-size: var(--fs-sm); font-weight: 650; text-align: right; }
 
 /* --------------------------------------------------------------------------
    Dialog

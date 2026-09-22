@@ -63,13 +63,28 @@
     ]));
 
     var ferdige = GolfStore.rounds().filter(function (r) { return r.status !== 'pagar'; });
-    var hist = el('section', { class: 'stack' }, [ el('h2', { text: 'Siste runder' }) ]);
+    var hist = el('section', { class: 'stack' }, [
+      el('div', { class: 'section-head' }, [
+        el('h2', { text: 'Siste runder' }),
+        ferdige.length > 5 ? el('button', {
+          class: 'btn btn-ghost btn-sm', text: 'Se alle',
+          onclick: function () { nav('historikk'); }
+        }) : null
+      ])
+    ]);
     if (!ferdige.length) {
       hist.appendChild(UI.emptyState(
         'Ingen runder ennå',
         'Når dere har spilt ferdig en runde, dukker den opp her.'));
     } else {
       ferdige.slice(0, 5).forEach(function (r) { hist.appendChild(rundeKort(r, nav)); });
+      if (ferdige.length > 5) {
+        hist.appendChild(el('button', {
+          class: 'btn btn-secondary btn-block',
+          text: 'Se alle ' + ferdige.length + ' runder',
+          onclick: function () { nav('historikk'); }
+        }));
+      }
     }
     wrap.appendChild(hist);
 
