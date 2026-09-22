@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Scoreapp for match play og scramble. All data ligger på denne enheten.">
+<!-- Appen laster ingenting utenfra. Denne regelen håndhever det. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#14231b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Golfapp">
+<title>Golfapp</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="app/styles/tokens.css">
+<link rel="stylesheet" href="app/styles/app.css">
+</head>
+<body>
+
+<p id="laster">Starter appen …</p>
+
+<div id="app" hidden>
+
+  <header class="topbar">
+    <button id="tilbake" class="iconbtn" type="button" aria-label="Tilbake" hidden>‹</button>
+    <h1 id="sidetittel">Golfapp</h1>
+  </header>
+
+  <main id="innhold"></main>
+
+  <nav class="tabbar" aria-label="Hovedmeny">
+    <button type="button" data-route="hjem" data-tab="hjem" aria-current="true">
+      <span class="tab-icon" aria-hidden="true">⛳</span>Hjem
+    </button>
+    <button type="button" data-route="statistikk" data-tab="statistikk" aria-current="false">
+      <span class="tab-icon" aria-hidden="true">▤</span>Statistikk
+    </button>
+    <button type="button" data-route="innstillinger" data-tab="innstillinger" aria-current="false">
+      <span class="tab-icon" aria-hidden="true">⚙</span>Innstillinger
+    </button>
+  </nav>
+
+</div>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app/assets/avatars.js"></script>
+<script src="app/js/db.js"></script>
+<script src="app/js/store.js"></script>
+<script src="app/js/ui.js"></script>
+<script src="app/js/backup.js"></script>
+<script src="app/js/screens.js"></script>
+<script src="app/js/screens-round.js"></script>
+<script src="app/js/app.js"></script>
+</body>
+</html>

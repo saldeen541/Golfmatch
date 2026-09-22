@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="nb" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Golfapp – designsystem og avatarer</title>
+<style>
+/* ---- app/styles/tokens.css, lagt inn i filen ---- */
+/* ==========================================================================
+   Golfapp - designsystem (fase 1)
+   Alle farger, størrelser og komponenter appen bygges av.
+   Ingen eksterne ressurser: systemfonter og ren CSS, slik at appen
+   fungerer helt uten nett.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Flater og linjer */
+  --surface-0: #fbfaf7;   /* sidebakgrunn */
+  --surface-1: #ffffff;   /* kort */
+  --surface-2: #f1efe9;   /* rader, felt som ligger lavere */
+  --surface-3: #e5e2d9;   /* aktiv rad */
+  --border:        #dcd8ce;
+  --border-strong: #b5afa1;
+
+  /* Tekst */
+  --ink:   #14231b;       /* mørk skogsgrønn, leses som nær-sort */
+  --ink-2: #4a544d;
+  --ink-3: #6e7770;
+  --ink-on-accent: #ffffff;
+
+  /* Aksent: flaggfargen. Brukes til primærhandlinger. */
+  --accent:       #cf4f1c;
+  --accent-hover: #b8461a;
+  --accent-soft:  #fbe9e0;
+
+  /* Status */
+  --good:   #1e7a45;
+  --good-soft: #e3f2e8;
+  --warn:   #a35c00;
+  --warn-soft: #fbeed6;
+  --danger: #b32b22;
+  --danger-soft: #fbe6e4;
+
+  /* Spillerfarger. Fast rekkefølge, aldri resirkulert.
+     Validert for fargeblindhet i begge moduser, alle par. */
+  --player-1: #2a78d6;  /* blå */
+  --player-2: #eda100;  /* gul */
+  --player-3: #e87ba4;  /* magenta */
+  --player-4: #008300;  /* grønn */
+
+  /* Typografi. Systemfonter, ingen nedlasting. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+
+  --fs-display: 2.75rem;  /* 44px - totalscore */
+  --fs-xl:      1.75rem;  /* 28px - sidetittel */
+  --fs-lg:      1.25rem;  /* 20px - korttittel */
+  --fs-md:      1rem;     /* 16px - brødtekst */
+  --fs-sm:      0.875rem; /* 14px */
+  --fs-xs:      0.75rem;  /* 12px - etiketter */
+
+  --lh-tight: 1.15;
+  --lh-normal: 1.5;
+
+  /* Avstand, 4 px-skala */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+  /* Hjørner */
+  --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-full: 999px;
+
+  /* Skygger */
+  --shadow-1: 0 1px 2px rgba(20, 35, 27, 0.08);
+  --shadow-2: 0 2px 10px rgba(20, 35, 27, 0.10);
+  --shadow-3: 0 8px 28px rgba(20, 35, 27, 0.16);
+
+  /* Berøringsflater. Aldri mindre enn dette på knapper. */
+  --tap-min: 48px;
+
+  --focus-ring: 0 0 0 3px var(--surface-0), 0 0 0 5.5px var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface-0: #12140f;
+    --surface-1: #1c1e19;
+    --surface-2: #262924;
+    --surface-3: #33362f;
+    --border:        #3a3e37;
+    --border-strong: #5c6157;
+
+    --ink:   #f4f2ea;
+    --ink-2: #c3c2b7;
+    --ink-3: #94958c;
+
+    --accent:       #e8663a;
+    --accent-hover: #f07a51;
+    --accent-soft:  #3a2118;
+
+    --good: #4cb377;  --good-soft:   #16301f;
+    --warn: #d59128;  --warn-soft:   #33260f;
+    --danger: #e26d63; --danger-soft: #351815;
+
+    --player-1: #3987e5;
+    --player-2: #c98500;
+    --player-3: #d55181;
+    --player-4: #008300;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.55);
+    --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-0: #12140f;
+  --surface-1: #1c1e19;
+  --surface-2: #262924;
+  --surface-3: #33362f;
+  --border:        #3a3e37;
+  --border-strong: #5c6157;
+
+  --ink:   #f4f2ea;
+  --ink-2: #c3c2b7;
+  --ink-3: #94958c;
+
+  --accent:       #e8663a;
+  --accent-hover: #f07a51;
+  --accent-soft:  #3a2118;
+
+  --good: #4cb377;  --good-soft:   #16301f;
+  --warn: #d59128;  --warn-soft:   #33260f;
+  --danger: #e26d63; --danger-soft: #351815;
+
+  --player-1: #3987e5;
+  --player-2: #c98500;
+  --player-3: #d55181;
+  --player-4: #008300;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.55);
+  --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. Grunnstiler
+   -------------------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  /* Hindrer at dobbelttrykk zoomer under registrering. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3 { line-height: var(--lh-tight); margin: 0; font-weight: 650; }
+h1 { font-size: var(--fs-xl); }
+h2 { font-size: var(--fs-lg); }
+h3 { font-size: var(--fs-md); }
+
+/* Alle tall i appen skal ha lik bredde, slik at kolonner ikke hopper. */
+.num, .score, input[type="number"], table {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.label {
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.muted { color: var(--ink-2); }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   3. Kort
+   -------------------------------------------------------------------------- */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s5);
+  box-shadow: var(--shadow-1);
+}
+
+.card-tight { padding: var(--s4); }
+
+/* --------------------------------------------------------------------------
+   4. Knapper
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--tap-min);
+  padding: 0 var(--s5);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease,
+              transform 80ms ease;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: var(--surface-1);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.btn-secondary:hover { background: var(--surface-2); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-block { width: 100%; }
+
+.btn-lg { min-height: 56px; font-size: var(--fs-lg); padding: 0 var(--s6); }
+
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* --------------------------------------------------------------------------
+   5. Segmentkontroll - brukes til Match / Scramble og 9 / 18 hull
+   -------------------------------------------------------------------------- */
+
+.segmented {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+}
+
+.segmented button {
+  min-height: 40px;
+  padding: 0 var(--s4);
+  border: none;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--surface-1);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+
+/* --------------------------------------------------------------------------
+   6. Slagteller - pluss og minus rundt et tall du også kan skrive i
+   -------------------------------------------------------------------------- */
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.stepper button {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepper button:hover { background: var(--surface-2); }
+
+.stepper input {
+  width: 68px;
+  height: var(--tap-min);
+  text-align: center;
+  font: inherit;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  -moz-appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* --------------------------------------------------------------------------
+   7. Avatar og spillerbrikke
+   -------------------------------------------------------------------------- */
+
+.avatar {
+  display: block;
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  overflow: hidden;
+  flex: none;
+}
+
+.avatar svg { display: block; width: 100%; height: 100%; }
+
+/* Ringen bruker spillerfargen. Fargen er aldri eneste kjennetegn:
+   dyret og navnet står alltid ved siden av. */
+.avatar-ring {
+  padding: 3px;
+  border-radius: var(--r-full);
+  background: var(--player-color, var(--border-strong));
+  display: inline-flex;
+}
+.avatar-ring > .avatar { border: 2px solid var(--surface-1); }
+
+.avatar-xs { width: 32px; height: 32px; }
+.avatar-sm { width: 40px; height: 40px; }
+.avatar-md { width: 56px; height: 56px; }
+.avatar-lg { width: 88px; height: 88px; }
+.avatar-xl { width: 112px; height: 112px; }
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4) var(--s2) var(--s2);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-weight: 650;
+}
+
+/* --------------------------------------------------------------------------
+   8. Scoreboard
+   -------------------------------------------------------------------------- */
+
+.scoreboard {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.scoreboard th, .scoreboard td {
+  padding: var(--s3) var(--s2);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.scoreboard thead th {
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Radens egen bakgrunn settes på raden, slik at den faste venstrekolonnen
+   arver den i stedet for å bryte markeringen av lederen. */
+.scoreboard tbody tr { background: var(--surface-1); }
+.scoreboard tbody tr[data-leader="true"] { background: var(--good-soft); }
+
+.scoreboard th:first-child,
+.scoreboard td:first-child {
+  text-align: left;
+  padding-left: var(--s3);
+  position: sticky;
+  left: 0;
+  background: inherit;
+}
+.scoreboard thead th:first-child { background: var(--surface-1); }
+
+.scoreboard td.total {
+  font-weight: 750;
+  font-size: var(--fs-lg);
+  box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.035);
+}
+
+.hole-won { font-weight: 750; color: var(--good); }
+
+/* --------------------------------------------------------------------------
+   9. Merker for birdie, eagle og hole in one
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--s3);
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+}
+
+.badge-birdie { color: var(--good);   background: var(--good-soft); }
+.badge-eagle  { color: var(--warn);   background: var(--warn-soft); }
+.badge-hio    { color: var(--accent); background: var(--accent-soft); }
+.badge-solo   { color: var(--ink-2);  background: var(--surface-2); }
+
+/* --------------------------------------------------------------------------
+   10. Stor score
+   -------------------------------------------------------------------------- */
+
+.score-display {
+  font-size: var(--fs-display);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   11. Bevegelse
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+</style>
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; padding: var(--s5) var(--s4) var(--s8); }
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+    padding: var(--s3) var(--s4);
+    background: color-mix(in srgb, var(--surface-0) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-size: var(--fs-lg); margin-right: auto; }
+  section { margin-top: var(--s7); }
+  section > h2 { margin-bottom: var(--s2); }
+  section > p.lead { margin: 0 0 var(--s4); color: var(--ink-2); max-width: 62ch; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+  .grid { display: grid; gap: var(--s3); }
+  .swatches { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .swatch {
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    overflow: hidden; background: var(--surface-1);
+  }
+  .swatch .chip { height: 56px; }
+  .swatch .meta { padding: var(--s2) var(--s3); font-size: var(--fs-sm); }
+  .swatch .meta b { display: block; }
+  .swatch .meta code { color: var(--ink-3); font-size: var(--fs-xs); }
+
+  .avatars { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .av-card {
+    border: 2px solid var(--border); border-radius: var(--r-lg);
+    background: var(--surface-1); padding: var(--s4);
+    display: flex; flex-direction: column; align-items: center; gap: var(--s2);
+    text-align: center; cursor: pointer; font: inherit; color: inherit;
+  }
+  .av-card[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .av-card .name { font-weight: 700; }
+  .av-card .note { font-size: var(--fs-xs); color: var(--ink-3); }
+  .av-card .pick { font-size: var(--fs-xs); font-weight: 700; color: var(--accent); min-height: 1.2em; }
+
+  .sizes { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+  .sizes figure { margin: 0; text-align: center; }
+  .sizes figcaption { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 4px; }
+
+  .type-sample { display: grid; gap: var(--s2); }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .picked {
+    padding: var(--s3) var(--s4); border-radius: var(--r-md);
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-size: var(--fs-sm);
+  }
+  .note-box {
+    border-left: 4px solid var(--accent); background: var(--surface-2);
+    padding: var(--s3) var(--s4); border-radius: 0 var(--r-md) var(--r-md) 0;
+    font-size: var(--fs-sm); color: var(--ink-2); max-width: 70ch;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Golfapp – fase 1</h1>
+  <div class="segmented" role="group" aria-label="Fargemodus">
+    <button type="button" id="mode-light" aria-pressed="true">Lys</button>
+    <button type="button" id="mode-dark" aria-pressed="false">Mørk</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <p class="lead" style="margin-top:var(--s4)">
+    Dette er designsystemet appen bygges av, og alle avatarene å velge mellom.
+    Trykk på avatarene du vil ha med videre, så samles valget nederst på siden.
+    Bytt mellom lys og mørk modus øverst for å se at alt holder seg lesbart.
+  </p>
+
+  <!-- ================= Avatarer ================= -->
+  <section>
+    <h2>Avatarer</h2>
+    <p class="lead">
+      Tolv dyr, tegnet fra bunnen av som SVG. Ørn, albatross og kondor er hentet
+      fra golfens eget språk. Silhuettene er laget så de skiller seg fra hverandre
+      også i liten størrelse, slik at fargen aldri er eneste kjennetegn.
+    </p>
+    <div class="grid avatars" id="avatar-grid"></div>
+    <p class="picked" id="picked" style="margin-top:var(--s4)">Ingen valgt ennå.</p>
+  </section>
+
+  <section>
+    <h2>Samme avatar i alle størrelsene appen bruker</h2>
+    <p class="lead">
+      32 px er listevisning, 40 px er scoreboardet, 56 px er spillerkortet og
+      112 px er oppsettet før runden. Sjekk at dyret fortsatt er til å kjenne
+      igjen på 32 px.
+    </p>
+    <div class="sizes" id="size-demo"></div>
+  </section>
+
+  <!-- ================= Farger ================= -->
+  <section>
+    <h2>Spillerfarger</h2>
+    <p class="lead">
+      Fire faste farger, én per spiller, tildelt i rekkefølge og aldri gjenbrukt
+      i samme runde. Kombinasjonen er testet for de vanligste formene for
+      fargeblindhet i både lys og mørk modus. Fargen er alltid et tillegg til
+      avatar og navn, aldri det eneste som skiller spillerne.
+    </p>
+    <div class="grid swatches" id="player-swatches"></div>
+  </section>
+
+  <section>
+    <h2>Grunnfarger</h2>
+    <div class="grid swatches" id="base-swatches"></div>
+    <p class="note-box" style="margin-top:var(--s4)">
+      Teksten er mørk skogsgrønn som leses som nær-sort, og bakgrunnen er svakt
+      varm i stedet for hvit. Det gir høy kontrast i sollys uten å bli skarpt å
+      se på. Aksentfargen er hentet fra flagget på greenen og brukes bare til
+      hovedhandlingen på hver skjerm.
+    </p>
+  </section>
+
+  <!-- ================= Typografi ================= -->
+  <section>
+    <h2>Typografi</h2>
+    <p class="lead">
+      Systemfont, uten nedlasting, slik at appen fungerer uten nett. Alle tall
+      har lik bredde, slik at kolonnene i scoreboardet ikke hopper når scoren endres.
+    </p>
+    <div class="card type-sample">
+      <div class="score-display num">14</div>
+      <h1>Sidetittel 28 px</h1>
+      <h2>Korttittel 20 px</h2>
+      <p style="margin:0">Brødtekst 16 px. Dette er vanlig tekst i appen.</p>
+      <p style="margin:0;font-size:var(--fs-sm);color:var(--ink-2)">Sekundærtekst 14 px</p>
+      <p class="label" style="margin:0">Etikett 12 px</p>
+    </div>
+  </section>
+
+  <!-- ================= Kontroller ================= -->
+  <section>
+    <h2>Knapper og kontroller</h2>
+    <p class="lead">
+      Alle trykkflater er minst 48 px høye, slik at de treffes med tommelen mens
+      man går. Hovedhandlingen er alltid den eneste fylte knappen på skjermen.
+    </p>
+
+    <div class="card" style="display:grid;gap:var(--s5)">
+      <div class="row">
+        <button class="btn btn-primary">Start runde</button>
+        <button class="btn btn-secondary">Legg til spiller</button>
+        <button class="btn btn-ghost">Avbryt</button>
+        <button class="btn btn-danger">Slett runde</button>
+        <button class="btn btn-primary" disabled>Ikke klar</button>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Spillmodus</p>
+        <div class="segmented" role="group" aria-label="Spillmodus">
+          <button type="button" aria-pressed="true">Match</button>
+          <button type="button" aria-pressed="false">Scramble</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Antall hull</p>
+        <div class="segmented" role="group" aria-label="Antall hull">
+          <button type="button" aria-pressed="false">9 hull</button>
+          <button type="button" aria-pressed="true">18 hull</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Slag på hullet</p>
+        <div class="stepper">
+          <button type="button" aria-label="Ett slag mindre">−</button>
+          <input type="number" class="num" value="4" inputmode="numeric" aria-label="Antall slag">
+          <button type="button" aria-label="Ett slag mer">+</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Merker</p>
+        <div class="row">
+          <span class="badge badge-birdie">Birdie</span>
+          <span class="badge badge-eagle">Eagle</span>
+          <span class="badge badge-hio">Hole in one</span>
+          <span class="badge badge-solo">Solo birdie</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Spillerbrikker</p>
+        <div class="row" id="chip-demo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Scoreboard ================= -->
+  <section>
+    <h2>Scoreboard, slik det vil se ut i Match</h2>
+    <p class="lead">
+      Navn og avatar står fast i venstre kolonne mens hullene skyves sidelengs.
+      Lederen er markert med bakgrunn, ikke bare med farge på tallet.
+    </p>
+    <div class="card card-tight scroll">
+      <table class="scoreboard" id="scoreboard"></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Neste steg</h2>
+    <p class="lead">
+      Når du har valgt avatarer og sagt fra om noe i designet bør endres, går
+      vi videre til fase 2: appskallet, spilleroppsett, banevalg og lagring.
+    </p>
+  </section>
+
+</div>
+
+<script>
+/* ---- app/assets/avatars.js, lagt inn i filen ---- */
+/* ==========================================================================
+   Golfapp - avatarer (fase 1)
+
+   Tolv originale dyreavatarer tegnet som SVG. Ingen bildefiler og ingen
+   nedlasting, slik at de fungerer uten nett og kan farges av CSS.
+
+   Tre av dyrene er hentet fra golfens eget språk: ørn (eagle), albatross
+   og kondor. De ni andre er dyr man faktisk møter på eller ved banen.
+   Utvalget er bevisst større enn det som trengs, slik at Kim kan plukke
+   ut favorittene i fase 1 og la resten ligge.
+
+   Brukes slik:
+     GolfAvatars.list                 -> [{ id, name, article, svg }, ...]
+     GolfAvatars.get('rev')           -> ett objekt
+     GolfAvatars.render('rev', 56)    -> HTML-streng med riktig størrelse
+
+   Hver avatar er tegnet i et 96x96-rutenett og skalerer fritt. Motivene er
+   laget så silhuettene skiller seg fra hverandre også på 32 px, slik at
+   fargen aldri er eneste kjennetegn.
+   ========================================================================== */
+
+(function (global) {
+  'use strict';
+
+  function svg(label, body) {
+    return (
+      '<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="' + label + '" focusable="false">' + body + '</svg>'
+    );
+  }
+
+  var AVATARS = [
+    {
+      id: 'orn',
+      name: 'Ørna',
+      article: 'Ørn',
+      note: 'To under par',
+      svg: svg('Ørn',
+        '<rect width="96" height="96" fill="#e7eef6"/>' +
+        '<path d="M22 96 C22 76 33 66 48 66 C63 66 74 76 74 96 Z" fill="#5f4531"/>' +
+        '<path d="M48 9 C68 9 82 27 82 47 C82 64 71 77 55 81 L41 81 C25 77 14 64 14 47 C14 27 28 9 48 9 Z" fill="#fbfcfd"/>' +
+        '<path d="M14 45 C17 29 30 20 48 20 C66 20 79 29 82 45 C75 33 63 27 48 27 C33 27 21 33 14 45 Z" fill="#cbd6e1"/>' +
+        '<circle cx="33" cy="50" r="7.4" fill="#f2b32a"/>' +
+        '<circle cx="63" cy="50" r="7.4" fill="#f2b32a"/>' +
+        '<circle cx="33" cy="52" r="3.3" fill="#17120a"/>' +
+        '<circle cx="63" cy="52" r="3.3" fill="#17120a"/>' +
+        '<path d="M23 40 L42 39 L42 48 L24 46 Z" fill="#453c33"/>' +
+        '<path d="M73 40 L54 39 L54 48 L72 46 Z" fill="#453c33"/>' +
+        '<path d="M40 57 h16 l-1.7 13 c-0.9 7 -3 11 -6.3 11 c-3.3 0 -5.4 -4 -6.3 -11 Z" fill="#f2b32a"/>' +
+        '<path d="M42.6 72 c0.6 6 2.2 9 5.4 9 c3.2 0 4.8 -3 5.4 -9 c-3.4 1.8 -7.4 1.8 -10.8 0 Z" fill="#cf9312"/>'
+      )
+    },
+    {
+      id: 'albatross',
+      name: 'Albatrossen',
+      article: 'Albatross',
+      note: 'Tre under par',
+      svg: svg('Albatross',
+        '<rect width="96" height="96" fill="#e4eff2"/>' +
+        '<path d="M48 44 C74 44 92 62 92 96 L4 96 C4 62 22 44 48 44 Z" fill="#b9cad2"/>' +
+        '<ellipse cx="48" cy="41" rx="36" ry="31" fill="#fdfdfd"/>' +
+        '<path d="M12 39 C15 21 29 11 48 11 C67 11 81 21 84 39 C77 26 64 20 48 20 C32 20 19 26 12 39 Z" fill="#a7bcc5"/>' +
+        '<ellipse cx="28" cy="40" rx="8.5" ry="6.5" fill="#cfdde2"/>' +
+        '<ellipse cx="68" cy="40" rx="8.5" ry="6.5" fill="#cfdde2"/>' +
+        '<circle cx="28" cy="40" r="4.2" fill="#22313a"/>' +
+        '<circle cx="68" cy="40" r="4.2" fill="#22313a"/>' +
+        '<circle cx="29.4" cy="38.5" r="1.4" fill="#ffffff"/>' +
+        '<circle cx="69.4" cy="38.5" r="1.4" fill="#ffffff"/>' +
+        '<path d="M37 48 h22 l-3 19 c-0.8 6 -4 10 -8 10 c-4 0 -7.2 -4 -8 -10 Z" fill="#e0c68c"/>' +
+        '<path d="M40.4 68 c0.8 6 3.8 9.4 7.6 9.4 c3.8 0 6.8 -3.4 7.6 -9.4 c-4.8 2.1 -10.4 2.1 -15.2 0 Z" fill="#a8873f"/>' +
+        '<path d="M48 49 v25" stroke="#c0a057" stroke-width="2"/>' +
+        '<rect x="38.6" y="51" width="4.4" height="9" rx="2.2" fill="#c0a057"/>' +
+        '<rect x="53" y="51" width="4.4" height="9" rx="2.2" fill="#c0a057"/>' +
+        '<path d="M37 48 h22" stroke="#9aa8ad" stroke-width="2"/>'
+      )
+    },
+    {
+      id: 'ugle',
+      name: 'Ugla',
+      article: 'Ugle',
+      note: 'Ser linjen alle andre bommer på',
+      svg: svg('Ugle',
+        '<rect width="96" height="96" fill="#f0e8dc"/>' +
+        '<path d="M19 33 L26 5 L43 25 Z" fill="#7d5f42"/>' +
+        '<path d="M77 33 L70 5 L53 25 Z" fill="#7d5f42"/>' +
+        '<ellipse cx="48" cy="56" rx="35" ry="36" fill="#8d6a4a"/>' +
+        '<path d="M48 26 C61 26 71 36 71 50 C71 66 61 79 48 84 C35 79 25 66 25 50 C25 36 35 26 48 26 Z" fill="#e3d2b8"/>' +
+        '<circle cx="36" cy="49" r="11" fill="#f8f4ec"/>' +
+        '<circle cx="60" cy="49" r="11" fill="#f8f4ec"/>' +
+        '<circle cx="36" cy="49" r="7.4" fill="#e8a020"/>' +
+        '<circle cx="60" cy="49" r="7.4" fill="#e8a020"/>' +
+        '<circle cx="36" cy="49" r="4" fill="#1a1207"/>' +
+        '<circle cx="60" cy="49" r="4" fill="#1a1207"/>' +
+        '<circle cx="37.6" cy="47.2" r="1.5" fill="#ffffff"/>' +
+        '<circle cx="61.6" cy="47.2" r="1.5" fill="#ffffff"/>' +
+        '<path d="M48 55 l5.4 7 -5.4 8 -5.4 -8 Z" fill="#d38b1e"/>' +
+        '<path d="M31 72 c5 5 11 7 17 7 c6 0 12 -2 17 -7" stroke="#c4ab86" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+      )
+    },
+    {
+      id: 'kondor',
+      name: 'Kondoren',
+      article: 'Kondor',
+      note: 'Fire under par',
+      svg: svg('Kondor',
+        '<rect width="96" height="96" fill="#eceae5"/>' +
+        '<path d="M48 50 C76 50 94 68 94 96 L2 96 C2 68 20 50 48 50 Z" fill="#2c2b29"/>' +
+        '<ellipse cx="48" cy="58" rx="31" ry="12" fill="#f6f4ef"/>' +
+        '<circle cx="20" cy="60" r="7.5" fill="#f6f4ef"/>' +
+        '<circle cx="31" cy="63" r="7.5" fill="#f6f4ef"/>' +
+        '<circle cx="42" cy="65" r="7.5" fill="#f6f4ef"/>' +
+        '<circle cx="54" cy="65" r="7.5" fill="#f6f4ef"/>' +
+        '<circle cx="65" cy="63" r="7.5" fill="#f6f4ef"/>' +
+        '<circle cx="76" cy="60" r="7.5" fill="#f6f4ef"/>' +
+        '<path d="M32 18 C34 8 42 5 48 5 C54 5 62 8 64 18 Z" fill="#bf6a34"/>' +
+        '<path d="M48 12 C60 12 69 22 69 35 C69 49 60 58 48 58 C36 58 27 49 27 35 C27 22 36 12 48 12 Z" fill="#dda06a"/>' +
+        '<path d="M30 27 C36 22 42 21 48 21 C54 21 60 22 66 27" stroke="#c0803f" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+        '<ellipse cx="39" cy="33" rx="5.4" ry="4.8" fill="#b06b39"/>' +
+        '<ellipse cx="57" cy="33" rx="5.4" ry="4.8" fill="#b06b39"/>' +
+        '<circle cx="39" cy="33" r="3.4" fill="#fbf8f2"/>' +
+        '<circle cx="57" cy="33" r="3.4" fill="#fbf8f2"/>' +
+        '<circle cx="39" cy="33" r="2" fill="#17130e"/>' +
+        '<circle cx="57" cy="33" r="2" fill="#17130e"/>' +
+        '<path d="M41.5 40 h13 l-1.8 14 c-0.8 8 -3.2 12 -4.7 12 c-1.5 0 -3.9 -4 -4.7 -12 Z" fill="#b5a994"/>' +
+        '<path d="M41.5 40 h13 l-0.7 5 h-11.6 Z" fill="#5d5346"/>' +
+        '<circle cx="44.6" cy="47" r="1.1" fill="#5d5346"/>' +
+        '<circle cx="51.4" cy="47" r="1.1" fill="#5d5346"/>' +
+        '<path d="M43.2 56 c-0.3 6.5 2 10 4.8 10 c2.8 0 5.1 -3.5 4.8 -10 c-3 1.8 -6.6 1.8 -9.6 0 Z" fill="#e8e2d5"/>'
+      )
+    },
+    {
+      id: 'rev',
+      name: 'Reven',
+      article: 'Rev',
+      note: 'Lur i ruffen',
+      svg: svg('Rev',
+        '<circle cx="48" cy="48" r="48" fill="#fbeada"/>' +
+        '<path d="M20 47 L24 13 L47 32 Z" fill="#d2622a"/>' +
+        '<path d="M76 47 L72 13 L49 32 Z" fill="#d2622a"/>' +
+        '<path d="M26 41 L28.5 22 L41 34 Z" fill="#8e3b2a"/>' +
+        '<path d="M70 41 L67.5 22 L55 34 Z" fill="#8e3b2a"/>' +
+        '<ellipse cx="48" cy="52" rx="29" ry="26" fill="#e8792f"/>' +
+        '<path d="M48 43 C37 52 32 63 35.5 71 C39 79 57 79 60.5 71 C64 63 59 52 48 43 Z" fill="#fdf4ea"/>' +
+        '<circle cx="36" cy="50" r="4.6" fill="#2a1a12"/>' +
+        '<circle cx="60" cy="50" r="4.6" fill="#2a1a12"/>' +
+        '<circle cx="37.5" cy="48.5" r="1.5" fill="#ffffff"/>' +
+        '<circle cx="61.5" cy="48.5" r="1.5" fill="#ffffff"/>' +
+        '<ellipse cx="48" cy="66" rx="6" ry="4.6" fill="#2a1a12"/>' +
+        '<path d="M48 70 v4" stroke="#2a1a12" stroke-width="2.2" stroke-linecap="round"/>'
+      )
+    },
+    {
+      id: 'grevling',
+      name: 'Grevlingen',
+      article: 'Grevling',
+      note: 'Graver seg ut av bunkeren',
+      svg: svg('Grevling',
+        '<circle cx="48" cy="48" r="48" fill="#eceef0"/>' +
+        '<circle cx="24" cy="29" r="9" fill="#5b6067"/>' +
+        '<circle cx="72" cy="29" r="9" fill="#5b6067"/>' +
+        '<circle cx="24" cy="29" r="4.4" fill="#b9bec4"/>' +
+        '<circle cx="72" cy="29" r="4.4" fill="#b9bec4"/>' +
+        '<path d="M48 23 C66 23 78 38 78 55 C78 73 64 85 48 85 C32 85 18 73 18 55 C18 38 30 23 48 23 Z" fill="#f7f7f4"/>' +
+        '<path d="M34 25 C28 39 27 57 32 72 L42 68 C38 55 39 38 43.5 24 Z" fill="#2e3238"/>' +
+        '<path d="M62 25 C68 39 69 57 64 72 L54 68 C58 55 57 38 52.5 24 Z" fill="#2e3238"/>' +
+        '<circle cx="37" cy="50" r="5" fill="#f7f7f4"/>' +
+        '<circle cx="59" cy="50" r="5" fill="#f7f7f4"/>' +
+        '<circle cx="37" cy="50" r="2.7" fill="#12151a"/>' +
+        '<circle cx="59" cy="50" r="2.7" fill="#12151a"/>' +
+        '<ellipse cx="48" cy="70" rx="6.4" ry="4.8" fill="#2e3238"/>' +
+        '<path d="M48 75 v4" stroke="#2e3238" stroke-width="2.2" stroke-linecap="round"/>'
+      )
+    },
+    {
+      id: 'elg',
+      name: 'Elgen',
+      article: 'Elg',
+      note: 'Eier fairwayen',
+      svg: svg('Elg',
+        '<circle cx="48" cy="48" r="48" fill="#efe6dc"/>' +
+        '<path d="M34 30 C22 28 12 21 10 11 C18 9 24 13 29 13 C26 6 31 2 38 5 C36 12 40 17 42 26 Z" fill="#ad8556"/>' +
+        '<path d="M62 30 C74 28 84 21 86 11 C78 9 72 13 67 13 C70 6 65 2 58 5 C60 12 56 17 54 26 Z" fill="#ad8556"/>' +
+        '<ellipse cx="23" cy="43" rx="9.5" ry="6" transform="rotate(-20 23 43)" fill="#5a4130"/>' +
+        '<ellipse cx="73" cy="43" rx="9.5" ry="6" transform="rotate(20 73 43)" fill="#5a4130"/>' +
+        '<path d="M48 24 C60 24 67 33 67 45 L65 60 C63 76 57 85 48 85 C39 85 33 76 31 60 L29 45 C29 33 36 24 48 24 Z" fill="#6e5038"/>' +
+        '<ellipse cx="48" cy="70" rx="13" ry="11.5" fill="#8e6b4a"/>' +
+        '<ellipse cx="43" cy="68" rx="2.5" ry="3.4" fill="#33231a"/>' +
+        '<ellipse cx="53" cy="68" rx="2.5" ry="3.4" fill="#33231a"/>' +
+        '<circle cx="39" cy="46" r="4.2" fill="#241811"/>' +
+        '<circle cx="57" cy="46" r="4.2" fill="#241811"/>' +
+        '<circle cx="40.3" cy="44.7" r="1.4" fill="#ffffff"/>' +
+        '<circle cx="58.3" cy="44.7" r="1.4" fill="#ffffff"/>'
+      )
+    },
+    {
+      id: 'hare',
+      name: 'Haren',
+      article: 'Hare',
+      note: 'Raskest rundt',
+      svg: svg('Hare',
+        '<circle cx="48" cy="48" r="48" fill="#f6efe2"/>' +
+        '<ellipse cx="34" cy="27" rx="8" ry="22" transform="rotate(-10 34 27)" fill="#c6a67c"/>' +
+        '<ellipse cx="62" cy="27" rx="8" ry="22" transform="rotate(10 62 27)" fill="#c6a67c"/>' +
+        '<ellipse cx="34" cy="28" rx="3.8" ry="15" transform="rotate(-10 34 28)" fill="#e9c9ae"/>' +
+        '<ellipse cx="62" cy="28" rx="3.8" ry="15" transform="rotate(10 62 28)" fill="#e9c9ae"/>' +
+        '<ellipse cx="48" cy="60" rx="25.5" ry="23.5" fill="#c6a67c"/>' +
+        '<ellipse cx="48" cy="68" rx="13.5" ry="12" fill="#f3e4d2"/>' +
+        '<circle cx="37" cy="56" r="4.4" fill="#2e2318"/>' +
+        '<circle cx="59" cy="56" r="4.4" fill="#2e2318"/>' +
+        '<circle cx="38.4" cy="54.6" r="1.5" fill="#ffffff"/>' +
+        '<circle cx="60.4" cy="54.6" r="1.5" fill="#ffffff"/>' +
+        '<path d="M48 62.5 l4.6 3.6 -4.6 3.6 -4.6 -3.6 Z" fill="#8a5f52"/>' +
+        '<rect x="44.4" y="72" width="3.2" height="8" rx="1.3" fill="#ffffff"/>' +
+        '<rect x="48.4" y="72" width="3.2" height="8" rx="1.3" fill="#ffffff"/>' +
+        '<path d="M48 69.7 v2.6" stroke="#8a5f52" stroke-width="2" stroke-linecap="round"/>'
+      )
+    },
+    {
+      id: 'pinnsvin',
+      name: 'Pinnsvinet',
+      article: 'Pinnsvin',
+      note: 'Trives i ruffen',
+      svg: svg('Pinnsvin',
+        '<circle cx="48" cy="48" r="48" fill="#f0e9e1"/>' +
+        '<path d="M11 64 L16 37 L23 52 L29 27 L36 46 L42 23 L48 42 L54 23 L60 46 L67 27 L73 52 L80 37 L85 64 Z" fill="#5f4b3c"/>' +
+        '<path d="M11 64 C11 78 27 88 48 88 C69 88 85 78 85 64 Z" fill="#7c6350"/>' +
+        '<ellipse cx="48" cy="66" rx="19" ry="17" fill="#dcc6ac"/>' +
+        '<path d="M48 63 C42.5 70 40.5 78 44 83 C46 86 50 86 52 83 C55.5 78 53.5 70 48 63 Z" fill="#ebdac4"/>' +
+        '<ellipse cx="48" cy="81" rx="3.9" ry="3" fill="#33251b"/>' +
+        '<circle cx="36" cy="62" r="4" fill="#33251b"/>' +
+        '<circle cx="60" cy="62" r="4" fill="#33251b"/>' +
+        '<circle cx="37.2" cy="60.8" r="1.3" fill="#ffffff"/>' +
+        '<circle cx="61.2" cy="60.8" r="1.3" fill="#ffffff"/>'
+      )
+    },
+    {
+      id: 'slange',
+      name: 'Slangen',
+      article: 'Slange',
+      note: 'Den lange putten som går inn',
+      svg: svg('Slange',
+        '<rect width="96" height="96" fill="#e6f0e4"/>' +
+        '<circle cx="48" cy="66" r="36" fill="#3f7a39"/>' +
+        '<path d="M14 70 C24 60 36 55 48 55 C60 55 72 60 82 70" stroke="#6ba861" stroke-width="8" fill="none" stroke-linecap="round"/>' +
+        '<path d="M22 32 C22 20 33 12 48 12 C63 12 74 20 74 32 C74 48 60 72 48 72 C36 72 22 48 22 32 Z" fill="#5c9c50"/>' +
+        '<path d="M29 28 C35 23 41 22 48 22 C55 22 61 23 67 28" stroke="#7cbd6e" stroke-width="3.2" fill="none" stroke-linecap="round"/>' +
+        '<path d="M33 40 C38 36 43 35 48 35 C53 35 58 36 63 40" stroke="#7cbd6e" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.75"/>' +
+        '<ellipse cx="34" cy="34" rx="7.4" ry="6.4" fill="#f2d24a"/>' +
+        '<ellipse cx="62" cy="34" rx="7.4" ry="6.4" fill="#f2d24a"/>' +
+        '<ellipse cx="34" cy="34" rx="2" ry="5.4" fill="#17200f"/>' +
+        '<ellipse cx="62" cy="34" rx="2" ry="5.4" fill="#17200f"/>' +
+        '<circle cx="31.6" cy="31.4" r="1.3" fill="#ffffff"/>' +
+        '<circle cx="59.6" cy="31.4" r="1.3" fill="#ffffff"/>' +
+        '<circle cx="43.5" cy="54" r="1.8" fill="#2d4a25"/>' +
+        '<circle cx="52.5" cy="54" r="1.8" fill="#2d4a25"/>' +
+        '<path d="M37 61 C41 65 55 65 59 61" stroke="#2d4a25" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+        '<path d="M48 65 v11" stroke="#d8443f" stroke-width="3.2" stroke-linecap="round"/>' +
+        '<path d="M48 76 l-6 7" stroke="#d8443f" stroke-width="3.2" stroke-linecap="round"/>' +
+        '<path d="M48 76 l6 7" stroke="#d8443f" stroke-width="3.2" stroke-linecap="round"/>'
+      )
+    },
+    {
+      id: 'rotte',
+      name: 'Rotta',
+      article: 'Rotte',
+      note: 'Finner ballen din i krattet',
+      svg: svg('Rotte',
+        '<rect width="96" height="96" fill="#eeedeb"/>' +
+        '<circle cx="21" cy="30" r="14" fill="#8e8b88"/>' +
+        '<circle cx="75" cy="30" r="14" fill="#8e8b88"/>' +
+        '<circle cx="21" cy="30" r="8" fill="#d7a8a8"/>' +
+        '<circle cx="75" cy="30" r="8" fill="#d7a8a8"/>' +
+        '<path d="M48 20 C63 20 74 31 74 46 C74 63 62 82 48 82 C34 82 22 63 22 46 C22 31 33 20 48 20 Z" fill="#9a9794"/>' +
+        '<path d="M48 47 C40 54 35 65 39.5 73 C43 79 53 79 56.5 73 C61 65 56 54 48 47 Z" fill="#c9c6c2"/>' +
+        '<circle cx="35" cy="43" r="4.8" fill="#1c1a19"/>' +
+        '<circle cx="61" cy="43" r="4.8" fill="#1c1a19"/>' +
+        '<circle cx="36.5" cy="41.5" r="1.6" fill="#ffffff"/>' +
+        '<circle cx="62.5" cy="41.5" r="1.6" fill="#ffffff"/>' +
+        '<path d="M34 64 L16 59 M34 69 L16 71" stroke="#7d7a77" stroke-width="1.8" stroke-linecap="round"/>' +
+        '<path d="M62 64 L80 59 M62 69 L80 71" stroke="#7d7a77" stroke-width="1.8" stroke-linecap="round"/>' +
+        '<ellipse cx="48" cy="70" rx="4.4" ry="3.4" fill="#d98e93"/>' +
+        '<rect x="44.4" y="73.5" width="3.3" height="8" rx="1.3" fill="#ffffff"/>' +
+        '<rect x="48.3" y="73.5" width="3.3" height="8" rx="1.3" fill="#ffffff"/>'
+      )
+    },
+    {
+      id: 'bever',
+      name: 'Beveren',
+      article: 'Bever',
+      note: 'Bygger demning i vannhinderet',
+      svg: svg('Bever',
+        '<circle cx="48" cy="48" r="48" fill="#efe4d8"/>' +
+        '<circle cx="23" cy="33" r="8.5" fill="#5e432e"/>' +
+        '<circle cx="73" cy="33" r="8.5" fill="#5e432e"/>' +
+        '<circle cx="23" cy="33" r="4" fill="#9a7455"/>' +
+        '<circle cx="73" cy="33" r="4" fill="#9a7455"/>' +
+        '<ellipse cx="48" cy="52" rx="29" ry="27" fill="#7a5638"/>' +
+        '<ellipse cx="48" cy="64" rx="17.5" ry="13.5" fill="#a5825f"/>' +
+        '<ellipse cx="48" cy="57" rx="5.2" ry="3.9" fill="#2e1f14"/>' +
+        '<rect x="43.4" y="65" width="4.4" height="12" rx="1.5" fill="#f0c64b"/>' +
+        '<rect x="48.2" y="65" width="4.4" height="12" rx="1.5" fill="#f0c64b"/>' +
+        '<circle cx="36" cy="45" r="4.3" fill="#241710"/>' +
+        '<circle cx="60" cy="45" r="4.3" fill="#241710"/>' +
+        '<circle cx="37.4" cy="43.6" r="1.4" fill="#ffffff"/>' +
+        '<circle cx="61.4" cy="43.6" r="1.4" fill="#ffffff"/>'
+      )
+    }
+  ];
+
+  var SIZES = { xs: 32, sm: 40, md: 56, lg: 88, xl: 112 };
+
+  var byId = {};
+  for (var i = 0; i < AVATARS.length; i++) byId[AVATARS[i].id] = AVATARS[i];
+
+  function get(id) { return byId[id] || null; }
+
+  function render(id, size) {
+    var a = get(id);
+    if (!a) return '';
+    var px = typeof size === 'number' ? size : (SIZES[size] || SIZES.md);
+    return '<span class="avatar" style="width:' + px + 'px;height:' + px + 'px">' +
+           a.svg + '</span>';
+  }
+
+  global.GolfAvatars = {
+    list: AVATARS,
+    sizes: SIZES,
+    get: get,
+    render: render
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+  var picked = new Set();
+
+  /* ---- lys / mørk ---- */
+  function setMode(mode) {
+    root.setAttribute('data-theme', mode);
+    document.getElementById('mode-light').setAttribute('aria-pressed', String(mode === 'light'));
+    document.getElementById('mode-dark').setAttribute('aria-pressed', String(mode === 'dark'));
+  }
+  document.getElementById('mode-light').addEventListener('click', function () { setMode('light'); });
+  document.getElementById('mode-dark').addEventListener('click', function () { setMode('dark'); });
+
+  /* ---- avatarer ---- */
+  var grid = document.getElementById('avatar-grid');
+  GolfAvatars.list.forEach(function (a) {
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'av-card';
+    card.setAttribute('aria-pressed', 'false');
+    card.innerHTML =
+      GolfAvatars.render(a.id, 112) +
+      '<span class="name">' + a.article + '</span>' +
+      '<span class="note">' + a.note + '</span>' +
+      '<span class="pick"></span>';
+    card.addEventListener('click', function () {
+      var on = card.getAttribute('aria-pressed') === 'true';
+      card.setAttribute('aria-pressed', String(!on));
+      card.querySelector('.pick').textContent = !on ? 'Valgt' : '';
+      if (on) { picked.delete(a.article); } else { picked.add(a.article); }
+      updatePicked();
+    });
+    grid.appendChild(card);
+  });
+
+  function updatePicked() {
+    var el = document.getElementById('picked');
+    if (picked.size === 0) { el.textContent = 'Ingen valgt ennå.'; return; }
+    el.textContent = 'Valgt (' + picked.size + '): ' + Array.from(picked).join(', ');
+  }
+
+  /* ---- størrelser ---- */
+  var sizeDemo = document.getElementById('size-demo');
+  [32, 40, 56, 88, 112].forEach(function (px) {
+    var fig = document.createElement('figure');
+    fig.innerHTML = GolfAvatars.render('rev', px) +
+      '<figcaption>' + px + ' px</figcaption>';
+    sizeDemo.appendChild(fig);
+  });
+
+  /* ---- fargeruter ---- */
+  function swatches(target, items) {
+    var box = document.getElementById(target);
+    items.forEach(function (it) {
+      var d = document.createElement('div');
+      d.className = 'swatch';
+      d.innerHTML =
+        '<div class="chip" style="background:var(' + it.varName + ')"></div>' +
+        '<div class="meta"><b>' + it.label + '</b><code>' + it.varName + '</code></div>';
+      box.appendChild(d);
+    });
+  }
+
+  var demoPlayers = [
+    { name: 'Kim',    avatar: 'rev',       varName: '--player-1' },
+    { name: 'Spiller 2', avatar: 'orn',    varName: '--player-2' },
+    { name: 'Spiller 3', avatar: 'elg',    varName: '--player-3' },
+    { name: 'Spiller 4', avatar: 'grevling', varName: '--player-4' }
+  ];
+
+  swatches('player-swatches', [
+    { label: 'Spiller 1', varName: '--player-1' },
+    { label: 'Spiller 2', varName: '--player-2' },
+    { label: 'Spiller 3', varName: '--player-3' },
+    { label: 'Spiller 4', varName: '--player-4' }
+  ]);
+
+  swatches('base-swatches', [
+    { label: 'Sidebakgrunn', varName: '--surface-0' },
+    { label: 'Kort',         varName: '--surface-1' },
+    { label: 'Rad',          varName: '--surface-2' },
+    { label: 'Tekst',        varName: '--ink' },
+    { label: 'Aksent',       varName: '--accent' },
+    { label: 'Positiv',      varName: '--good' },
+    { label: 'Varsel',       varName: '--warn' },
+    { label: 'Fare',         varName: '--danger' }
+  ]);
+
+  /* ---- spillerbrikker ---- */
+  var chipBox = document.getElementById('chip-demo');
+  demoPlayers.forEach(function (p) {
+    var chip = document.createElement('span');
+    chip.className = 'player-chip';
+    chip.innerHTML =
+      '<span class="avatar-ring" style="--player-color:var(' + p.varName + ')">' +
+        GolfAvatars.render(p.avatar, 40) +
+      '</span>' + p.name;
+    chipBox.appendChild(chip);
+  });
+
+  /* ---- scoreboard ---- */
+  var holes = 9;
+  var demoScores = [
+    { player: demoPlayers[0], points: [1, 0.5, 0, 1, 0, 0, 0.5, 1, 0] },
+    { player: demoPlayers[1], points: [0, 0.5, 1, 0, 0, 1, 0.5, 0, 1] },
+    { player: demoPlayers[2], points: [0, 0,   0, 0, 1, 0, 0,   0, 0] },
+    { player: demoPlayers[3], points: [0, 0,   0, 0, 0, 0, 0,   0, 0] }
+  ];
+
+  var totals = demoScores.map(function (r) {
+    return r.points.reduce(function (a, b) { return a + b; }, 0);
+  });
+  var best = Math.max.apply(null, totals);
+
+  var head = '<thead><tr><th>Spiller</th>';
+  for (var h = 1; h <= holes; h++) head += '<th>' + h + '</th>';
+  head += '<th>Sum</th></tr></thead>';
+
+  var bodyHtml = '<tbody>';
+  demoScores.forEach(function (r, idx) {
+    var isLeader = totals[idx] === best;
+    bodyHtml += '<tr data-leader="' + isLeader + '">' +
+      '<td><span style="display:inline-flex;align-items:center;gap:8px">' +
+        '<span class="avatar-ring" style="--player-color:var(' + r.player.varName + ')">' +
+          GolfAvatars.render(r.player.avatar, 32) +
+        '</span>' + r.player.name +
+      '</span></td>';
+    r.points.forEach(function (p) {
+      var cls = p === 1 ? ' class="num hole-won"' : ' class="num"';
+      var txt = p === 0.5 ? '½' : String(p);
+      bodyHtml += '<td' + cls + '>' + txt + '</td>';
+    });
+    var t = totals[idx];
+    bodyHtml += '<td class="total num">' + (t % 1 ? String(Math.floor(t)) + '½' : String(t)) + '</td></tr>';
+  });
+  bodyHtml += '</tbody>';
+
+  document.getElementById('scoreboard').innerHTML = head + bodyHtml;
+})();
+</script>
+</body>
+</html>

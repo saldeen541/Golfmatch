@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="nb" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Golfapp – designsystem og avatarer</title>
+<link rel="stylesheet" href="../app/styles/tokens.css">
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; padding: var(--s5) var(--s4) var(--s8); }
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+    padding: var(--s3) var(--s4);
+    background: color-mix(in srgb, var(--surface-0) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-size: var(--fs-lg); margin-right: auto; }
+  section { margin-top: var(--s7); }
+  section > h2 { margin-bottom: var(--s2); }
+  section > p.lead { margin: 0 0 var(--s4); color: var(--ink-2); max-width: 62ch; }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+  .grid { display: grid; gap: var(--s3); }
+  .swatches { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .swatch {
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    overflow: hidden; background: var(--surface-1);
+  }
+  .swatch .chip { height: 56px; }
+  .swatch .meta { padding: var(--s2) var(--s3); font-size: var(--fs-sm); }
+  .swatch .meta b { display: block; }
+  .swatch .meta code { color: var(--ink-3); font-size: var(--fs-xs); }
+
+  .avatars { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .av-card {
+    border: 2px solid var(--border); border-radius: var(--r-lg);
+    background: var(--surface-1); padding: var(--s4);
+    display: flex; flex-direction: column; align-items: center; gap: var(--s2);
+    text-align: center; cursor: pointer; font: inherit; color: inherit;
+  }
+  .av-card[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .av-card .name { font-weight: 700; }
+  .av-card .note { font-size: var(--fs-xs); color: var(--ink-3); }
+  .av-card .pick { font-size: var(--fs-xs); font-weight: 700; color: var(--accent); min-height: 1.2em; }
+
+  .sizes { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+  .sizes figure { margin: 0; text-align: center; }
+  .sizes figcaption { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 4px; }
+
+  .type-sample { display: grid; gap: var(--s2); }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .picked {
+    padding: var(--s3) var(--s4); border-radius: var(--r-md);
+    background: var(--surface-2); border: 1px solid var(--border);
+    font-size: var(--fs-sm);
+  }
+  .note-box {
+    border-left: 4px solid var(--accent); background: var(--surface-2);
+    padding: var(--s3) var(--s4); border-radius: 0 var(--r-md) var(--r-md) 0;
+    font-size: var(--fs-sm); color: var(--ink-2); max-width: 70ch;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Golfapp – fase 1</h1>
+  <div class="segmented" role="group" aria-label="Fargemodus">
+    <button type="button" id="mode-light" aria-pressed="true">Lys</button>
+    <button type="button" id="mode-dark" aria-pressed="false">Mørk</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <p class="lead" style="margin-top:var(--s4)">
+    Dette er designsystemet appen bygges av, og alle avatarene å velge mellom.
+    Trykk på avatarene du vil ha med videre, så samles valget nederst på siden.
+    Bytt mellom lys og mørk modus øverst for å se at alt holder seg lesbart.
+  </p>
+
+  <!-- ================= Avatarer ================= -->
+  <section>
+    <h2>Avatarer</h2>
+    <p class="lead">
+      Tolv dyr, tegnet fra bunnen av som SVG. Ørn, albatross og kondor er hentet
+      fra golfens eget språk. Silhuettene er laget så de skiller seg fra hverandre
+      også i liten størrelse, slik at fargen aldri er eneste kjennetegn.
+    </p>
+    <div class="grid avatars" id="avatar-grid"></div>
+    <p class="picked" id="picked" style="margin-top:var(--s4)">Ingen valgt ennå.</p>
+  </section>
+
+  <section>
+    <h2>Samme avatar i alle størrelsene appen bruker</h2>
+    <p class="lead">
+      32 px er listevisning, 40 px er scoreboardet, 56 px er spillerkortet og
+      112 px er oppsettet før runden. Sjekk at dyret fortsatt er til å kjenne
+      igjen på 32 px.
+    </p>
+    <div class="sizes" id="size-demo"></div>
+  </section>
+
+  <!-- ================= Farger ================= -->
+  <section>
+    <h2>Spillerfarger</h2>
+    <p class="lead">
+      Fire faste farger, én per spiller, tildelt i rekkefølge og aldri gjenbrukt
+      i samme runde. Kombinasjonen er testet for de vanligste formene for
+      fargeblindhet i både lys og mørk modus. Fargen er alltid et tillegg til
+      avatar og navn, aldri det eneste som skiller spillerne.
+    </p>
+    <div class="grid swatches" id="player-swatches"></div>
+  </section>
+
+  <section>
+    <h2>Grunnfarger</h2>
+    <div class="grid swatches" id="base-swatches"></div>
+    <p class="note-box" style="margin-top:var(--s4)">
+      Teksten er mørk skogsgrønn som leses som nær-sort, og bakgrunnen er svakt
+      varm i stedet for hvit. Det gir høy kontrast i sollys uten å bli skarpt å
+      se på. Aksentfargen er hentet fra flagget på greenen og brukes bare til
+      hovedhandlingen på hver skjerm.
+    </p>
+  </section>
+
+  <!-- ================= Typografi ================= -->
+  <section>
+    <h2>Typografi</h2>
+    <p class="lead">
+      Systemfont, uten nedlasting, slik at appen fungerer uten nett. Alle tall
+      har lik bredde, slik at kolonnene i scoreboardet ikke hopper når scoren endres.
+    </p>
+    <div class="card type-sample">
+      <div class="score-display num">14</div>
+      <h1>Sidetittel 28 px</h1>
+      <h2>Korttittel 20 px</h2>
+      <p style="margin:0">Brødtekst 16 px. Dette er vanlig tekst i appen.</p>
+      <p style="margin:0;font-size:var(--fs-sm);color:var(--ink-2)">Sekundærtekst 14 px</p>
+      <p class="label" style="margin:0">Etikett 12 px</p>
+    </div>
+  </section>
+
+  <!-- ================= Kontroller ================= -->
+  <section>
+    <h2>Knapper og kontroller</h2>
+    <p class="lead">
+      Alle trykkflater er minst 48 px høye, slik at de treffes med tommelen mens
+      man går. Hovedhandlingen er alltid den eneste fylte knappen på skjermen.
+    </p>
+
+    <div class="card" style="display:grid;gap:var(--s5)">
+      <div class="row">
+        <button class="btn btn-primary">Start runde</button>
+        <button class="btn btn-secondary">Legg til spiller</button>
+        <button class="btn btn-ghost">Avbryt</button>
+        <button class="btn btn-danger">Slett runde</button>
+        <button class="btn btn-primary" disabled>Ikke klar</button>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Spillmodus</p>
+        <div class="segmented" role="group" aria-label="Spillmodus">
+          <button type="button" aria-pressed="true">Match</button>
+          <button type="button" aria-pressed="false">Scramble</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Antall hull</p>
+        <div class="segmented" role="group" aria-label="Antall hull">
+          <button type="button" aria-pressed="false">9 hull</button>
+          <button type="button" aria-pressed="true">18 hull</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Slag på hullet</p>
+        <div class="stepper">
+          <button type="button" aria-label="Ett slag mindre">−</button>
+          <input type="number" class="num" value="4" inputmode="numeric" aria-label="Antall slag">
+          <button type="button" aria-label="Ett slag mer">+</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Merker</p>
+        <div class="row">
+          <span class="badge badge-birdie">Birdie</span>
+          <span class="badge badge-eagle">Eagle</span>
+          <span class="badge badge-hio">Hole in one</span>
+          <span class="badge badge-solo">Solo birdie</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="label" style="margin:0 0 var(--s2)">Spillerbrikker</p>
+        <div class="row" id="chip-demo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Scoreboard ================= -->
+  <section>
+    <h2>Scoreboard, slik det vil se ut i Match</h2>
+    <p class="lead">
+      Navn og avatar står fast i venstre kolonne mens hullene skyves sidelengs.
+      Lederen er markert med bakgrunn, ikke bare med farge på tallet.
+    </p>
+    <div class="card card-tight scroll">
+      <table class="scoreboard" id="scoreboard"></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Neste steg</h2>
+    <p class="lead">
+      Når du har valgt avatarer og sagt fra om noe i designet bør endres, går
+      vi videre til fase 2: appskallet, spilleroppsett, banevalg og lagring.
+    </p>
+  </section>
+
+</div>
+
+<script src="../app/assets/avatars.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+  var picked = new Set();
+
+  /* ---- lys / mørk ---- */
+  function setMode(mode) {
+    root.setAttribute('data-theme', mode);
+    document.getElementById('mode-light').setAttribute('aria-pressed', String(mode === 'light'));
+    document.getElementById('mode-dark').setAttribute('aria-pressed', String(mode === 'dark'));
+  }
+  document.getElementById('mode-light').addEventListener('click', function () { setMode('light'); });
+  document.getElementById('mode-dark').addEventListener('click', function () { setMode('dark'); });
+
+  /* ---- avatarer ---- */
+  var grid = document.getElementById('avatar-grid');
+  GolfAvatars.list.forEach(function (a) {
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'av-card';
+    card.setAttribute('aria-pressed', 'false');
+    card.innerHTML =
+      GolfAvatars.render(a.id, 112) +
+      '<span class="name">' + a.article + '</span>' +
+      '<span class="note">' + a.note + '</span>' +
+      '<span class="pick"></span>';
+    card.addEventListener('click', function () {
+      var on = card.getAttribute('aria-pressed') === 'true';
+      card.setAttribute('aria-pressed', String(!on));
+      card.querySelector('.pick').textContent = !on ? 'Valgt' : '';
+      if (on) { picked.delete(a.article); } else { picked.add(a.article); }
+      updatePicked();
+    });
+    grid.appendChild(card);
+  });
+
+  function updatePicked() {
+    var el = document.getElementById('picked');
+    if (picked.size === 0) { el.textContent = 'Ingen valgt ennå.'; return; }
+    el.textContent = 'Valgt (' + picked.size + '): ' + Array.from(picked).join(', ');
+  }
+
+  /* ---- størrelser ---- */
+  var sizeDemo = document.getElementById('size-demo');
+  [32, 40, 56, 88, 112].forEach(function (px) {
+    var fig = document.createElement('figure');
+    fig.innerHTML = GolfAvatars.render('rev', px) +
+      '<figcaption>' + px + ' px</figcaption>';
+    sizeDemo.appendChild(fig);
+  });
+
+  /* ---- fargeruter ---- */
+  function swatches(target, items) {
+    var box = document.getElementById(target);
+    items.forEach(function (it) {
+      var d = document.createElement('div');
+      d.className = 'swatch';
+      d.innerHTML =
+        '<div class="chip" style="background:var(' + it.varName + ')"></div>' +
+        '<div class="meta"><b>' + it.label + '</b><code>' + it.varName + '</code></div>';
+      box.appendChild(d);
+    });
+  }
+
+  var demoPlayers = [
+    { name: 'Kim',    avatar: 'rev',       varName: '--player-1' },
+    { name: 'Spiller 2', avatar: 'orn',    varName: '--player-2' },
+    { name: 'Spiller 3', avatar: 'elg',    varName: '--player-3' },
+    { name: 'Spiller 4', avatar: 'grevling', varName: '--player-4' }
+  ];
+
+  swatches('player-swatches', [
+    { label: 'Spiller 1', varName: '--player-1' },
+    { label: 'Spiller 2', varName: '--player-2' },
+    { label: 'Spiller 3', varName: '--player-3' },
+    { label: 'Spiller 4', varName: '--player-4' }
+  ]);
+
+  swatches('base-swatches', [
+    { label: 'Sidebakgrunn', varName: '--surface-0' },
+    { label: 'Kort',         varName: '--surface-1' },
+    { label: 'Rad',          varName: '--surface-2' },
+    { label: 'Tekst',        varName: '--ink' },
+    { label: 'Aksent',       varName: '--accent' },
+    { label: 'Positiv',      varName: '--good' },
+    { label: 'Varsel',       varName: '--warn' },
+    { label: 'Fare',         varName: '--danger' }
+  ]);
+
+  /* ---- spillerbrikker ---- */
+  var chipBox = document.getElementById('chip-demo');
+  demoPlayers.forEach(function (p) {
+    var chip = document.createElement('span');
+    chip.className = 'player-chip';
+    chip.innerHTML =
+      '<span class="avatar-ring" style="--player-color:var(' + p.varName + ')">' +
+        GolfAvatars.render(p.avatar, 40) +
+      '</span>' + p.name;
+    chipBox.appendChild(chip);
+  });
+
+  /* ---- scoreboard ---- */
+  var holes = 9;
+  var demoScores = [
+    { player: demoPlayers[0], points: [1, 0.5, 0, 1, 0, 0, 0.5, 1, 0] },
+    { player: demoPlayers[1], points: [0, 0.5, 1, 0, 0, 1, 0.5, 0, 1] },
+    { player: demoPlayers[2], points: [0, 0,   0, 0, 1, 0, 0,   0, 0] },
+    { player: demoPlayers[3], points: [0, 0,   0, 0, 0, 0, 0,   0, 0] }
+  ];
+
+  var totals = demoScores.map(function (r) {
+    return r.points.reduce(function (a, b) { return a + b; }, 0);
+  });
+  var best = Math.max.apply(null, totals);
+
+  var head = '<thead><tr><th>Spiller</th>';
+  for (var h = 1; h <= holes; h++) head += '<th>' + h + '</th>';
+  head += '<th>Sum</th></tr></thead>';
+
+  var bodyHtml = '<tbody>';
+  demoScores.forEach(function (r, idx) {
+    var isLeader = totals[idx] === best;
+    bodyHtml += '<tr data-leader="' + isLeader + '">' +
+      '<td><span style="display:inline-flex;align-items:center;gap:8px">' +
+        '<span class="avatar-ring" style="--player-color:var(' + r.player.varName + ')">' +
+          GolfAvatars.render(r.player.avatar, 32) +
+        '</span>' + r.player.name +
+      '</span></td>';
+    r.points.forEach(function (p) {
+      var cls = p === 1 ? ' class="num hole-won"' : ' class="num"';
+      var txt = p === 0.5 ? '½' : String(p);
+      bodyHtml += '<td' + cls + '>' + txt + '</td>';
+    });
+    var t = totals[idx];
+    bodyHtml += '<td class="total num">' + (t % 1 ? String(Math.floor(t)) + '½' : String(t)) + '</td></tr>';
+  });
+  bodyHtml += '</tbody>';
+
+  document.getElementById('scoreboard').innerHTML = head + bodyHtml;
+})();
+</script>
+</body>
+</html>
